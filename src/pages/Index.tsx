@@ -37,6 +37,12 @@ const Index = () => {
           >
             📺 MODO TV
           </button>
+          <a
+            href="/admin"
+            className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-cyan hover:bg-secondary/10 transition-all duration-300 hover:scale-105"
+          >
+            ⚙ ADMIN
+          </a>
         </div>
       </header>
 
