@@ -1,66 +1,67 @@
+## Plano — Plataforma Escolar Administrável (Future Shift Board v2)
 
-# Painel Administrativo — Future Shift Board
+O escopo é grande. Vou entregar em **3 fases** para que cada uma seja revisada e funcione de ponta a ponta. Posso começar pela Fase 1 imediatamente após sua aprovação.
 
-Vou construir uma área `/admin` completa, protegida por login e role `admin`, com tema próprio (escuro moderno, sidebar fixa) diferente do painel cyberpunk público.
+---
 
-## 1. Backend (Lovable Cloud)
+### Fase 1 — Fundação: Auth, Perfis, Turmas, Horários, Modo TV dinâmico
 
-Vou ativar o Lovable Cloud (banco + auth + storage) e criar:
+**Backend (migrations)**
+- Enum `app_role` ampliado: `master`, `admin`, `secretary`, `teacher`, `student`, `visitor` (mantém compat com `admin`/`user` atuais)
+- `profiles`: + `must_change_password boolean`, `active boolean`, `phone`
+- `classes` (id, name, grade, active)
+- `teachers` (user_id, subject)
+- `student_classes` (user_id, class_id) — vínculo aluno↔turma
+- `teacher_classes` (user_id, class_id) — vínculo professor↔turma
+- `schedules` (class_id, teacher_id, subject, room, day_of_week 0-6, start_time, end_time, content_taught, notes)
+- `announcements` (title, description, priority, target_scope jsonb {all|grade|class_ids[]}, start_date, end_date, active)
+- `menu_pages` (title, slug, icon, color, order_position, visibility jsonb {roles[]})
+- `tv_settings` (singleton: rotation_seconds, theme, logo_url, background_url, show_clock, show_news, show_announcements)
+- `audit_logs` (user_id, action, module, old_value jsonb, new_value jsonb, created_at, ip)
+- Função `has_any_role(_user_id, _roles app_role[])`
+- RLS por perfil em cada tabela; GRANTs corretos; triggers `updated_at`; trigger genérico de auditoria nas tabelas principais
+- Realtime habilitado em `schedules`, `announcements`, `tv_settings`
+- Seed: turmas 1A–1D, 2A–2D, 3A–3D + usuário **Master** (`admin@escola.com` / `Admin@123`, `must_change_password=true`)
 
-**Auth & Roles**
-- Autenticação por e-mail/senha (signup/login/logout)
-- Enum `app_role` (`admin`, `user`)
-- Tabela `user_roles` + função `has_role()` security definer
-- Tabela `profiles` (id, display_name, avatar) com trigger no signup
-- Rotas `/admin/*` protegidas: redireciona para `/auth` se não logado, e mostra "Acesso negado" se não for admin
+**Frontend**
+- `useAuth` estendido com `roles[]`, `hasRole()`, `mustChangePassword`
+- Página `/auth/change-password` obrigatória no primeiro login
+- Página `/auth/forgot-password` + `/auth/reset-password`
+- `ProtectedRoute` com checagem por roles
+- `/admin` reorganizado: Dashboard, Usuários, Turmas, Horários, Conteúdos, Avisos, Menu, Modo TV, Auditoria, Configurações
+- `/tv` (página dedicada, fullscreen, sem menus):
+  - Rotação automática das 12 turmas (intervalo de `tv_settings.rotation_seconds`, padrão 30s)
+  - Painel lateral direito de avisos (oculto quando não há avisos ativos → conteúdo ocupa 100%)
+  - Filtragem de avisos por turma exibida
+  - Relógio grande, data, transições suaves, realtime subscription
 
-**Tabelas**
-- `categories` (id, name, icon, color, created_at)
-- `contents` (id, title, subtitle, content, cover_image, gallery[], category_id, tags[], status, author_id, created_at, updated_at) — com trigger `updated_at`
-- `media` (id, file_name, file_url, file_type, file_size, uploaded_by, uploaded_at)
-- `site_settings` (singleton — id, site_name, logo, favicon, description, social_links jsonb, contact_email, contact_phone, footer_text)
+---
 
-**RLS**
-- Leitura pública de `contents` (status='published'), `categories`, `site_settings`
-- Escrita/leitura completa em todas as tabelas: apenas `admin`
-- `user_roles`: leitura pelo próprio usuário; escrita apenas admin
+### Fase 2 — Lançamento de Aulas & Portais
 
-**Storage**
-- Bucket público `media` para imagens/PDFs/vídeos (upload restrito a admins via RLS)
+- `/secretary/schedules` — grade semanal por turma, criar/editar horários
+- `/teacher` — minhas aulas, lançar conteúdo ministrado, atividades, observações
+- `/student` — meus horários, avisos da minha turma, conteúdos
+- Filtros de avisos por: todas / ano (1º,2º,3º) / turma específica
+- Menu dinâmico carregado de `menu_pages` com filtro por role
 
-## 2. Frontend Admin (`/admin`)
+---
 
-Layout próprio com `SidebarProvider` shadcn, tema escuro moderno (slate/zinc + accent único), distinto do público.
+### Fase 3 — Auditoria, Backup, Exportações
 
-**Rotas**
-- `/auth` — login/cadastro
-- `/admin` — Dashboard (cards de estatísticas + últimas atualizações)
-- `/admin/contents` — listagem com busca, filtro por categoria, ordenação, paginação; ações editar/excluir/visualizar
-- `/admin/contents/new` e `/admin/contents/:id/edit` — formulário com editor rico (textarea estilizado + markdown), upload de capa, galeria múltipla, seleção de categoria, tags, status, auto-save (debounce 2s)
-- `/admin/categories` — CRUD inline com seletor de ícone (lucide) e cor
-- `/admin/media` — grid de uploads, upload múltiplo, exclusão
-- `/admin/settings` — formulário único de configurações do site
+- Tela `/admin/audit` com filtros (usuário, módulo, período)
+- Edge Function `backup-export` (JSON completo do schema público)
+- Exportação CSV/Excel/PDF por módulo (usuários, horários, avisos)
+- Cron diário de snapshot em storage `backups/`
 
-**Componentes**
-- `AdminLayout`, `AdminSidebar`, `StatCard`, `DataTable`, `ContentForm`, `CategoryDialog`, `MediaGrid`, `ConfirmDialog`, `RichTextEditor` (textarea com toolbar simples), `ProtectedAdminRoute`
+---
 
-**UX**
-- Toasts de sucesso/erro (sonner)
-- Confirmação antes de excluir
-- Loading states e skeleton
-- Responsivo (sidebar vira sheet no mobile)
+### Fora de escopo desta entrega
+- WYSIWYG completo (mantém markdown leve)
+- App mobile nativo
+- Notificações push / e-mail transacional (pode ser adicionado depois com Lovable Email)
+- SSO externo (Google/Apple) — adicionável sob demanda
 
-## 3. Detalhes técnicos
+---
 
-- Cliente Supabase em `src/integrations/supabase/client.ts` (gerado pelo Cloud)
-- Hook `useAuth()` com `onAuthStateChange` + `getUser()`
-- Hook `useIsAdmin()` consultando `has_role`
-- Validação Zod nos formulários
-- Upload via `supabase.storage.from('media').upload(...)`
-
-## 4. Fora de escopo nesta entrega
-- Editor WYSIWYG completo (uso textarea + markdown leve; pode evoluir depois)
-- Versionamento de conteúdos
-- Logs de auditoria
-
-Após aprovação, ativo o Cloud, crio a migração, e construo todas as telas.
+**Confirma para eu começar pela Fase 1?** Se preferir, posso já incluir Google sign-in na Fase 1 (recomendado) ou priorizar outro bloco antes.
