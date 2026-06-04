@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          priority: string
+          start_date: string | null
+          target_scope: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          priority?: string
+          start_date?: string | null
+          target_scope?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          priority?: string
+          start_date?: string | null
+          target_scope?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          module: string
+          new_value: Json | null
+          old_value: Json | null
+          record_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          module: string
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          module?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string | null
@@ -35,6 +113,36 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      classes: {
+        Row: {
+          active: boolean
+          created_at: string
+          grade: number
+          id: string
+          name: string
+          order_position: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          grade: number
+          id?: string
+          name: string
+          order_position?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          grade?: number
+          id?: string
+          name?: string
+          order_position?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -124,29 +232,133 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_pages: {
+        Row: {
+          active: boolean
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          order_position: number
+          slug: string
+          title: string
+          updated_at: string
+          visibility: Json
+        }
+        Insert: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          order_position?: number
+          slug: string
+          title: string
+          updated_at?: string
+          visibility?: Json
+        }
+        Update: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          order_position?: number
+          slug?: string
+          title?: string
+          updated_at?: string
+          visibility?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          active: boolean
           avatar_url: string | null
           created_at: string
           display_name: string | null
           id: string
+          must_change_password: boolean
+          phone: string | null
           updated_at: string
         }
         Insert: {
+          active?: boolean
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id: string
+          must_change_password?: boolean
+          phone?: string | null
           updated_at?: string
         }
         Update: {
+          active?: boolean
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          must_change_password?: boolean
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      schedules: {
+        Row: {
+          class_id: string
+          color: string | null
+          content_taught: string | null
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          notes: string | null
+          room: string | null
+          start_time: string
+          subject: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          color?: string | null
+          content_taught?: string | null
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          notes?: string | null
+          room?: string | null
+          start_time: string
+          subject: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          color?: string | null
+          content_taught?: string | null
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          notes?: string | null
+          room?: string | null
+          start_time?: string
+          subject?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_settings: {
         Row: {
@@ -187,6 +399,106 @@ export type Database = {
         }
         Relationships: []
       }
+      student_classes: {
+        Row: {
+          class_id: string
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_classes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_classes: {
+        Row: {
+          class_id: string
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_classes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          created_at: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tv_settings: {
+        Row: {
+          background_url: string | null
+          id: string
+          logo_url: string | null
+          rotation_seconds: number
+          show_announcements: boolean
+          show_clock: boolean
+          show_news: boolean
+          theme: string | null
+          updated_at: string
+        }
+        Insert: {
+          background_url?: string | null
+          id?: string
+          logo_url?: string | null
+          rotation_seconds?: number
+          show_announcements?: boolean
+          show_clock?: boolean
+          show_news?: boolean
+          theme?: string | null
+          updated_at?: string
+        }
+        Update: {
+          background_url?: string | null
+          id?: string
+          logo_url?: string | null
+          rotation_seconds?: number
+          show_announcements?: boolean
+          show_clock?: boolean
+          show_news?: boolean
+          theme?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -213,6 +525,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -220,9 +539,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_level: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role:
+        | "admin"
+        | "user"
+        | "master"
+        | "secretary"
+        | "teacher"
+        | "student"
+        | "visitor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -350,7 +677,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: [
+        "admin",
+        "user",
+        "master",
+        "secretary",
+        "teacher",
+        "student",
+        "visitor",
+      ],
     },
   },
 } as const

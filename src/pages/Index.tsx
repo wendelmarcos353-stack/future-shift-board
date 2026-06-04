@@ -1,17 +1,11 @@
-import { useState } from "react";
 import DigitalClock from "@/components/DigitalClock";
 import ScheduleBoard from "@/components/ScheduleBoard";
 import Announcements from "@/components/Announcements";
 import ExamCountdown from "@/components/ExamCountdown";
 import NewsTicker from "@/components/NewsTicker";
-import TVMode from "@/components/TVMode";
 
 const Index = () => {
-  const [tvMode, setTvMode] = useState(false);
 
-  if (tvMode) {
-    return <TVMode onExit={() => setTvMode(false)} />;
-  }
 
   return (
     <div className="min-h-screen p-3 md:p-6 relative">
@@ -31,12 +25,12 @@ const Index = () => {
 
         <div className="flex items-center gap-4">
           <DigitalClock />
-          <button
-            onClick={() => setTvMode(true)}
+          <a
+            href="/tv"
             className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-purple hover:bg-secondary/10 transition-all duration-300 hover:scale-105"
           >
             📺 MODO TV
-          </button>
+          </a>
           <a
             href="/admin"
             className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-cyan hover:bg-secondary/10 transition-all duration-300 hover:scale-105"

@@ -16,9 +16,13 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/classes", label: "Turmas", icon: FolderTree },
+  { to: "/admin/schedules", label: "Horários", icon: FileText },
+  { to: "/admin/announcements", label: "Avisos", icon: FileText },
   { to: "/admin/contents", label: "Conteúdos", icon: FileText },
   { to: "/admin/categories", label: "Categorias", icon: FolderTree },
   { to: "/admin/media", label: "Mídia", icon: ImageIcon },
+  { to: "/admin/tv", label: "Modo TV", icon: Settings },
   { to: "/admin/settings", label: "Configurações", icon: Settings },
 ];
 

@@ -99,6 +99,9 @@ export default function Auth() {
                 <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
+                <a href="/auth/forgot-password" className="block text-center text-sm text-blue-400 hover:underline">
+                  Esqueci minha senha
+                </a>
               </form>
             </TabsContent>
             <TabsContent value="signup">
