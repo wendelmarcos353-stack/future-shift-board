@@ -15,7 +15,19 @@ export default function ProtectedAdminRoute({ children }: { children: React.Reac
   if (!user) return <Navigate to="/auth" replace />;
   if (mustChangePassword) return <Navigate to="/auth/change-password" replace />;
 
-  const allowed = isAdmin || hasRole("secretary", "teacher");
+  // 1. Defina a lista de e-mails autorizados para testes aqui:
+  const emailsAutorizados = [
+    "wendelmarcos353@gmail.com",
+    "mrff@cesar.school",
+    "outro.email.teste@exemplo.com" // Podem adicionar quantos quiserem aqui
+  ];
+
+  // 2. A variável allowed agora verifica os cargos OU se o e-mail está na lista:
+  const allowed = 
+    isAdmin || 
+    hasRole("secretary", "teacher") || 
+    (user?.email && emailsAutorizados.includes(user.email));
+
   if (!allowed) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 p-6 text-center">
