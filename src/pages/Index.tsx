@@ -25,12 +25,12 @@ const Index = () => {
 
         <div className="flex items-center gap-4">
           <DigitalClock />
-          <button
-            onClick={() => setTvMode(true)}
+          <a
+            href="/tv"
             className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-purple hover:bg-secondary/10 transition-all duration-300 hover:scale-105"
           >
             📺 MODO TV
-          </button>
+          </a>
           <a
             href="/admin"
             className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-cyan hover:bg-secondary/10 transition-all duration-300 hover:scale-105"
