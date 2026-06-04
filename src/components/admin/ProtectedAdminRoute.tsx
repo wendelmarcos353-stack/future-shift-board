@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, hasRole, mustChangePassword, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,8 +13,10 @@ export default function ProtectedAdminRoute({ children }: { children: React.Reac
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+  if (mustChangePassword) return <Navigate to="/auth/change-password" replace />;
 
-  if (!isAdmin) {
+  const allowed = isAdmin || hasRole("secretary", "teacher");
+  if (!allowed) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 p-6 text-center">
         <h1 className="text-3xl font-bold mb-2">Acesso restrito</h1>
