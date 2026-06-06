@@ -271,13 +271,67 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_edit: boolean
+          can_manage_classes: boolean
+          can_manage_content: boolean
+          can_manage_menu: boolean
+          can_manage_pages: boolean
+          can_manage_schedules: boolean
+          can_manage_tv: boolean
+          can_manage_users: boolean
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_manage_classes?: boolean
+          can_manage_content?: boolean
+          can_manage_menu?: boolean
+          can_manage_pages?: boolean
+          can_manage_schedules?: boolean
+          can_manage_tv?: boolean
+          can_manage_users?: boolean
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_manage_classes?: boolean
+          can_manage_content?: boolean
+          can_manage_menu?: boolean
+          can_manage_pages?: boolean
+          can_manage_schedules?: boolean
+          can_manage_tv?: boolean
+          can_manage_users?: boolean
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
           avatar_url: string | null
+          blocked_until: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
+          last_sign_in_at: string | null
           must_change_password: boolean
           phone: string | null
           updated_at: string
@@ -285,9 +339,12 @@ export type Database = {
         Insert: {
           active?: boolean
           avatar_url?: string | null
+          blocked_until?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id: string
+          last_sign_in_at?: string | null
           must_change_password?: boolean
           phone?: string | null
           updated_at?: string
@@ -295,9 +352,12 @@ export type Database = {
         Update: {
           active?: boolean
           avatar_url?: string | null
+          blocked_until?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
+          last_sign_in_at?: string | null
           must_change_password?: boolean
           phone?: string | null
           updated_at?: string
