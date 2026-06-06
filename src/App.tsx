@@ -23,6 +23,7 @@ import AdminClasses from "./pages/admin/AdminClasses";
 import AdminSchedules from "./pages/admin/AdminSchedules";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminTvSettings from "./pages/admin/AdminTvSettings";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const queryClient = new QueryClient();
 
