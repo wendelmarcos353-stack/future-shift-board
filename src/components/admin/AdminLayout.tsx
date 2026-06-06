@@ -43,7 +43,7 @@ export default function AdminLayout() {
     <div className="min-h-screen flex bg-zinc-950 text-zinc-100">
       {/* Sidebar desktop */}
       <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 bg-zinc-900 border-r border-zinc-800">
-        <SidebarContent onNavigate={() => {}} onSignOut={handleSignOut} userEmail={user?.email} />
+        <SidebarContent items={visibleItems} onNavigate={() => {}} onSignOut={handleSignOut} userEmail={user?.email} />
       </aside>
 
       {/* Mobile drawer */}
@@ -51,6 +51,7 @@ export default function AdminLayout() {
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
             <SidebarContent
+              items={visibleItems}
               onNavigate={() => setMobileOpen(false)}
               onSignOut={handleSignOut}
               userEmail={user?.email}
