@@ -8,14 +8,16 @@ import {
   LogOut,
   Home,
   Menu,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const items = [
+const items: Array<{ to: string; label: string; icon: any; end?: boolean; masterOnly?: boolean }> = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/users", label: "Usuários", icon: Users, masterOnly: true },
   { to: "/admin/classes", label: "Turmas", icon: FolderTree },
   { to: "/admin/schedules", label: "Horários", icon: FileText },
   { to: "/admin/announcements", label: "Avisos", icon: FileText },
@@ -27,9 +29,10 @@ const items = [
 ];
 
 export default function AdminLayout() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, isMaster } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const visibleItems = items.filter((it) => !it.masterOnly || isMaster);
 
   const handleSignOut = async () => {
     await signOut();
@@ -40,7 +43,7 @@ export default function AdminLayout() {
     <div className="min-h-screen flex bg-zinc-950 text-zinc-100">
       {/* Sidebar desktop */}
       <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 bg-zinc-900 border-r border-zinc-800">
-        <SidebarContent onNavigate={() => {}} onSignOut={handleSignOut} userEmail={user?.email} />
+        <SidebarContent items={visibleItems} onNavigate={() => {}} onSignOut={handleSignOut} userEmail={user?.email} />
       </aside>
 
       {/* Mobile drawer */}
@@ -48,6 +51,7 @@ export default function AdminLayout() {
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
             <SidebarContent
+              items={visibleItems}
               onNavigate={() => setMobileOpen(false)}
               onSignOut={handleSignOut}
               userEmail={user?.email}
@@ -73,10 +77,12 @@ export default function AdminLayout() {
 }
 
 function SidebarContent({
+  items,
   onNavigate,
   onSignOut,
   userEmail,
 }: {
+  items: Array<{ to: string; label: string; icon: any; end?: boolean }>;
   onNavigate: () => void;
   onSignOut: () => void;
   userEmail?: string;
