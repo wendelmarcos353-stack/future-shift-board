@@ -77,10 +77,12 @@ export default function AdminLayout() {
 }
 
 function SidebarContent({
+  items,
   onNavigate,
   onSignOut,
   userEmail,
 }: {
+  items: Array<{ to: string; label: string; icon: any; end?: boolean }>;
   onNavigate: () => void;
   onSignOut: () => void;
   userEmail?: string;
