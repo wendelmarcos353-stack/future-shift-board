@@ -29,7 +29,6 @@ const items: Array<{ to: string; label: string; icon: any; end?: boolean; master
 ];
 
 export default function AdminLayout() {
-export default function AdminLayout() {
   const { signOut, user, isMaster } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
