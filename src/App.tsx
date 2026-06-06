@@ -59,6 +59,7 @@ const App = () => (
               <Route path="categories" element={<AdminCategories />} />
               <Route path="media" element={<AdminMedia />} />
               <Route path="tv" element={<AdminTvSettings />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
