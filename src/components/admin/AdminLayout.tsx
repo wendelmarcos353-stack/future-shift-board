@@ -8,14 +8,16 @@ import {
   LogOut,
   Home,
   Menu,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const items = [
+const items: Array<{ to: string; label: string; icon: any; end?: boolean; masterOnly?: boolean }> = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/users", label: "Usuários", icon: Users, masterOnly: true },
   { to: "/admin/classes", label: "Turmas", icon: FolderTree },
   { to: "/admin/schedules", label: "Horários", icon: FileText },
   { to: "/admin/announcements", label: "Avisos", icon: FileText },
