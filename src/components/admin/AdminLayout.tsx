@@ -9,6 +9,8 @@ import {
   Home,
   Menu,
   Users,
+  BookOpen,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -19,7 +21,9 @@ const items: Array<{ to: string; label: string; icon: any; end?: boolean; master
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/users", label: "Usuários", icon: Users, masterOnly: true },
   { to: "/admin/classes", label: "Turmas", icon: FolderTree },
+  { to: "/admin/lessons", label: "Aulas", icon: BookOpen },
   { to: "/admin/schedules", label: "Horários", icon: FileText },
+  { to: "/admin/exams", label: "Provas", icon: GraduationCap },
   { to: "/admin/announcements", label: "Avisos", icon: FileText },
   { to: "/admin/contents", label: "Conteúdos", icon: FileText },
   { to: "/admin/categories", label: "Categorias", icon: FolderTree },

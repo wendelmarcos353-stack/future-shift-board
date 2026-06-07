@@ -24,6 +24,9 @@ import AdminSchedules from "./pages/admin/AdminSchedules";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminTvSettings from "./pages/admin/AdminTvSettings";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminLessons from "./pages/admin/AdminLessons";
+import AdminExams from "./pages/admin/AdminExams";
+import Exams from "./pages/Exams";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/tv" element={<TVMode />} />
+            <Route path="/exams" element={<Exams />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/change-password" element={<ChangePassword />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
@@ -51,7 +55,9 @@ const App = () => (
             >
               <Route index element={<AdminDashboard />} />
               <Route path="classes" element={<AdminClasses />} />
+              <Route path="lessons" element={<AdminLessons />} />
               <Route path="schedules" element={<AdminSchedules />} />
+              <Route path="exams" element={<AdminExams />} />
               <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="contents" element={<AdminContents />} />
               <Route path="contents/new" element={<AdminContentForm />} />
