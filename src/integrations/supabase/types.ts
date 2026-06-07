@@ -202,6 +202,121 @@ export type Database = {
           },
         ]
       }
+      exams: {
+        Row: {
+          active: boolean
+          class_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          exam_date: string
+          id: string
+          room: string | null
+          start_time: string | null
+          subject: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          exam_date: string
+          id?: string
+          room?: string | null
+          start_time?: string | null
+          subject: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          exam_date?: string
+          id?: string
+          room?: string | null
+          start_time?: string | null
+          subject?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          class_id: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          day_of_week: number | null
+          end_time: string
+          id: string
+          lesson_date: string | null
+          notes: string | null
+          room: string | null
+          start_time: string
+          subject: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number | null
+          end_time: string
+          id?: string
+          lesson_date?: string | null
+          notes?: string | null
+          room?: string | null
+          start_time: string
+          subject: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number | null
+          end_time?: string
+          id?: string
+          lesson_date?: string | null
+          notes?: string | null
+          room?: string | null
+          start_time?: string
+          subject?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media: {
         Row: {
           file_name: string
