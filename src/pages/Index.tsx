@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import DigitalClock from "@/components/DigitalClock";
 import ScheduleBoard from "@/components/ScheduleBoard";
 import Announcements from "@/components/Announcements";
 import ExamCountdown from "@/components/ExamCountdown";
 import NewsTicker from "@/components/NewsTicker";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
 

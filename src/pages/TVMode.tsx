@@ -49,28 +49,36 @@ const announcementMatchesClass = (a: Announcement, cls: ClassRow) => {
   return true;
 };
 
+type Exam = {
+  id: string; class_id: string; subject: string; room: string | null;
+  exam_date: string; start_time: string | null; end_time: string | null;
+};
+
 export default function TVMode() {
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [settings, setSettings] = useState<TvSettings | null>(null);
+  const [exams, setExams] = useState<Exam[]>([]);
   const [idx, setIdx] = useState(0);
   const [fade, setFade] = useState(true);
   const [now, setNow] = useState(new Date());
 
-  // Initial load + realtime
   useEffect(() => {
     const load = async () => {
-      const [c, s, a, t] = await Promise.all([
+      const today = new Date().toISOString().slice(0,10);
+      const [c, s, a, t, e] = await Promise.all([
         supabase.from("classes").select("*").eq("active", true).order("order_position"),
         supabase.from("schedules").select("*"),
         supabase.from("announcements").select("*"),
         supabase.from("tv_settings").select("*").limit(1).maybeSingle(),
+        supabase.from("exams").select("*").eq("active", true).gte("exam_date", today).order("exam_date"),
       ]);
       if (c.data) setClasses(c.data as any);
       if (s.data) setSchedules(s.data as any);
       if (a.data) setAnnouncements(a.data as any);
       if (t.data) setSettings(t.data as any);
+      if (e.data) setExams(e.data as any);
     };
     load();
 
@@ -80,32 +88,36 @@ export default function TVMode() {
       .on("postgres_changes", { event: "*", schema: "public", table: "schedules" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "tv_settings" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "exams" }, load)
       .subscribe();
 
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  // Clock
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Rotation
-  const rotationMs = (settings?.rotation_seconds ?? 30) * 1000;
+  // Slots: classes followed by an optional "exams" slot
+  const hasExamSlot = exams.length > 0;
+  const totalSlots = classes.length + (hasExamSlot ? 1 : 0);
+
+  const rotationMs = (settings?.rotation_seconds ?? 15) * 1000;
   useEffect(() => {
-    if (classes.length === 0) return;
+    if (totalSlots === 0) return;
     const t = setInterval(() => {
       setFade(false);
       setTimeout(() => {
-        setIdx((i) => (i + 1) % classes.length);
+        setIdx((i) => (i + 1) % totalSlots);
         setFade(true);
       }, 400);
     }, rotationMs);
     return () => clearInterval(t);
-  }, [rotationMs, classes.length]);
+  }, [rotationMs, totalSlots]);
 
-  const currentClass = classes[idx];
+  const isExamSlot = hasExamSlot && idx === classes.length;
+  const currentClass = isExamSlot ? undefined : classes[idx];
   const today = now.getDay();
   const classSchedules = useMemo(
     () =>
@@ -124,7 +136,8 @@ export default function TVMode() {
     [announcements, currentClass]
   );
 
-  const showSidebar = (settings?.show_announcements ?? true) && activeAnnouncements.length > 0;
+  const showSidebar =
+    !isExamSlot && (settings?.show_announcements ?? true) && activeAnnouncements.length > 0;
 
   const isCurrentClass = (s: Schedule) => {
     const [sh, sm] = s.start_time.split(":").map(Number);
@@ -132,6 +145,8 @@ export default function TVMode() {
     const nowMin = now.getHours() * 60 + now.getMinutes();
     return nowMin >= sh * 60 + sm && nowMin < eh * 60 + em;
   };
+
+  const classMap = Object.fromEntries(classes.map((c) => [c.id, c.name]));
 
   return (
     <div
@@ -145,11 +160,9 @@ export default function TVMode() {
       <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
 
       <div className="relative z-10 h-full flex">
-        {/* Main panel */}
         <main
           className={`flex-1 flex flex-col p-8 transition-opacity duration-500 ${fade ? "opacity-100" : "opacity-0"}`}
         >
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               {settings?.logo_url && (
@@ -157,10 +170,10 @@ export default function TVMode() {
               )}
               <div>
                 <p className="font-display text-sm text-muted-foreground tracking-widest">
-                  TURMA EM EXIBIÇÃO
+                  {isExamSlot ? "PRÓXIMAS AVALIAÇÕES" : "TURMA EM EXIBIÇÃO"}
                 </p>
                 <h1 className="font-display text-7xl font-bold neon-text-cyan tracking-wider leading-none">
-                  {currentClass?.name ?? "—"}
+                  {isExamSlot ? "📝 PROVAS" : currentClass?.name ?? "—"}
                 </h1>
               </div>
             </div>
@@ -174,56 +187,81 @@ export default function TVMode() {
             )}
           </div>
 
-          {/* Schedule grid */}
           <div className="flex-1 glass-panel p-6 overflow-hidden flex flex-col">
-            <h2 className="font-display text-2xl neon-text-purple mb-4 tracking-wider">
-              📅 AULAS DE HOJE
-            </h2>
-            {classSchedules.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="font-display text-3xl text-muted-foreground">Sem aulas hoje</p>
-              </div>
-            ) : (
-              <div className="grid gap-3 overflow-y-auto">
-                {classSchedules.map((s) => {
-                  const active = isCurrentClass(s);
-                  return (
-                    <div
-                      key={s.id}
-                      className={`flex items-center gap-6 p-5 rounded-lg border transition-all ${
-                        active
-                          ? "border-primary bg-primary/15 neon-border scale-[1.02]"
-                          : "border-border/40 bg-card/30"
-                      }`}
-                    >
-                      <div className={`font-display text-3xl font-bold ${active ? "neon-text-cyan" : "text-foreground"}`}>
-                        {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
-                      </div>
-                      <div className="flex-1">
-                        <p className={`font-display text-2xl ${active ? "neon-text-pink" : "text-foreground"}`}>
-                          {s.subject}
+            {isExamSlot ? (
+              <>
+                <h2 className="font-display text-2xl neon-text-purple mb-4 tracking-wider">
+                  📝 CALENDÁRIO DE PROVAS
+                </h2>
+                <div className="grid gap-3 overflow-y-auto md:grid-cols-2">
+                  {exams.map((e) => (
+                    <div key={e.id} className="p-5 rounded-lg border border-border/40 bg-card/30">
+                      <p className="font-display text-xs neon-text-purple tracking-widest">
+                        {new Date(e.exam_date + "T00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "long" })}
+                      </p>
+                      <p className="font-display text-2xl neon-text-cyan mt-1">{e.subject}</p>
+                      <p className="font-body text-sm text-foreground/80">Turma: {classMap[e.class_id] ?? "—"}</p>
+                      {(e.start_time || e.room) && (
+                        <p className="font-body text-sm text-muted-foreground mt-1">
+                          {e.start_time ? `🕒 ${e.start_time.slice(0,5)}${e.end_time ? `–${e.end_time.slice(0,5)}` : ""}` : ""}
+                          {e.room ? `  ·  🚪 Sala ${e.room}` : ""}
                         </p>
-                        {s.room && (
-                          <p className="font-body text-base text-muted-foreground">Sala: {s.room}</p>
-                        )}
-                      </div>
-                      {active && (
-                        <span className="font-display text-sm neon-text-cyan animate-pulse tracking-wider">
-                          ● EM AULA
-                        </span>
                       )}
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="font-display text-2xl neon-text-purple mb-4 tracking-wider">
+                  📅 AULAS DE HOJE
+                </h2>
+                {classSchedules.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="font-display text-3xl text-muted-foreground">Sem aulas hoje</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 overflow-y-auto">
+                    {classSchedules.map((s) => {
+                      const active = isCurrentClass(s);
+                      return (
+                        <div
+                          key={s.id}
+                          className={`flex items-center gap-6 p-5 rounded-lg border transition-all ${
+                            active
+                              ? "border-primary bg-primary/15 neon-border scale-[1.02]"
+                              : "border-border/40 bg-card/30"
+                          }`}
+                        >
+                          <div className={`font-display text-3xl font-bold ${active ? "neon-text-cyan" : "text-foreground"}`}>
+                            {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-display text-2xl ${active ? "neon-text-pink" : "text-foreground"}`}>
+                              {s.subject}
+                            </p>
+                            {s.room && (
+                              <p className="font-body text-base text-muted-foreground">Sala: {s.room}</p>
+                            )}
+                          </div>
+                          {active && (
+                            <span className="font-display text-sm neon-text-cyan animate-pulse tracking-wider">
+                              ● EM AULA
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
-          {/* Pagination dots */}
           <div className="mt-4 flex justify-center gap-2">
-            {classes.map((c, i) => (
+            {Array.from({ length: totalSlots }).map((_, i) => (
               <span
-                key={c.id}
+                key={i}
                 className={`h-2 rounded-full transition-all ${
                   i === idx ? "w-8 bg-primary" : "w-2 bg-muted"
                 }`}
@@ -232,7 +270,6 @@ export default function TVMode() {
           </div>
         </main>
 
-        {/* Announcements sidebar */}
         {showSidebar && (
           <aside className="w-96 border-l border-border/50 bg-card/40 backdrop-blur p-6 flex flex-col gap-4 overflow-y-auto">
             <h2 className="font-display text-xl neon-text-pink tracking-wider">📢 AVISOS</h2>
