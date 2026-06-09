@@ -697,7 +697,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      teacher_directory: {
+        Row: {
+          display_name: string | null
+          id: string | null
+        }
+        Insert: {
+          display_name?: string | null
+          id?: string | null
+        }
+        Update: {
+          display_name?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_any_role: {
