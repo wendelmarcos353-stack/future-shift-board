@@ -35,6 +35,9 @@ export default function ClassTabs() {
   const [teachers, setTeachers] = useState<Record<string, string>>({});
   const [grade, setGrade] = useState<string>("1");
   const [classId, setClassId] = useState<string>("");
+  const todayIdx = new Date().getDay();
+  const defaultDay = todayIdx >= 1 && todayIdx <= 5 ? todayIdx : 1;
+  const [selectedDay, setSelectedDay] = useState<number>(defaultDay);
 
   useEffect(() => {
     const load = async () => {
