@@ -173,40 +173,66 @@ export default function ClassTabs() {
                     )}
                   </section>
 
-                  {/* Horário completo da semana */}
+                  {/* Horário por dia da semana */}
                   <section>
-                    <h3 className="font-display text-sm neon-text-purple tracking-wider mb-2">
-                      🗓️ HORÁRIO COMPLETO
-                    </h3>
-                    {classSchedules.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Nenhum horário cadastrado.</p>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs md:text-sm">
-                          <thead>
-                            <tr className="text-left text-muted-foreground">
-                              <th className="py-1 pr-2">Dia</th>
-                              <th className="py-1 pr-2">Horário</th>
-                              <th className="py-1 pr-2">Disciplina</th>
-                              <th className="py-1 pr-2">Professor</th>
-                              <th className="py-1">Sala</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {classSchedules.map((s) => (
-                              <tr key={s.id} className="border-t border-border/30">
-                                <td className="py-1 pr-2">{DAYS[s.day_of_week]}</td>
-                                <td className="py-1 pr-2 font-mono">{s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}</td>
-                                <td className="py-1 pr-2">{s.subject}</td>
-                                <td className="py-1 pr-2">{s.teacher_id ? (teachers[s.teacher_id] || "—") : "—"}</td>
-                                <td className="py-1">{s.room || "—"}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <h3 className="font-display text-sm neon-text-purple tracking-wider">
+                        🗓️ HORÁRIO DA SEMANA
+                      </h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-3 p-1 rounded-lg bg-background/30 border border-border/40">
+                      {[1, 2, 3, 4, 5].map((d) => {
+                        const isActive = selectedDay === d;
+                        const isToday = todayIdx === d;
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setSelectedDay(d)}
+                            className={`flex-1 min-w-[70px] px-3 py-2 rounded-md font-display text-xs md:text-sm tracking-wider transition-all duration-300 ${
+                              isActive
+                                ? "bg-primary/20 neon-text-cyan neon-border shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
+                                : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
+                            }`}
+                            aria-pressed={isActive}
+                          >
+                            <span className="hidden md:inline">{DAYS[d]}</span>
+                            <span className="md:hidden">{DAYS[d].slice(0, 3)}</span>
+                            {isToday && <span className="ml-1 text-[10px] neon-text-pink">•</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(() => {
+                      const daySchedules = classSchedules.filter((s) => s.day_of_week === selectedDay);
+                      if (daySchedules.length === 0) {
+                        return (
+                          <p className="text-sm text-muted-foreground py-4 text-center">
+                            Nenhuma aula cadastrada para este dia.
+                          </p>
+                        );
+                      }
+                      return (
+                        <div className="grid gap-2 animate-float-up">
+                          {daySchedules.map((s) => (
+                            <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
+                              <div className="font-mono text-sm font-bold neon-text-cyan w-28">
+                                {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-display text-base">{s.subject}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {s.teacher_id ? (teachers[s.teacher_id] || "Professor") : "—"}
+                                  {s.room ? ` · Sala ${s.room}` : ""}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </section>
+
 
                   {/* Próximas aulas pontuais */}
                   {upcomingLessons.length > 0 && (
