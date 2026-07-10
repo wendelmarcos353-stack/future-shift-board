@@ -274,7 +274,7 @@ export default function ClassTabs() {
                               <p className="font-display text-sm">{l.subject}</p>
                               <p className="text-xs text-muted-foreground">
                                 {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
-                                {l.teacher_id ? ` · ${teachers[l.teacher_id] || "Professor"}` : ""}
+                                {l.teacher_id ? ` · ${teacherLabel(l.teacher_id)}` : ""}
                                 {l.room ? ` · Sala ${l.room}` : ""}
                               </p>
                             </div>
