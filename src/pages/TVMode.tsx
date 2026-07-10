@@ -127,12 +127,17 @@ export default function TVMode() {
   const isExamSlot = hasExamSlot && idx === classes.length;
   const currentClass = isExamSlot ? undefined : classes[idx];
   const today = now.getDay();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
   const classSchedules = useMemo(
     () =>
       schedules
         .filter((s) => s.class_id === currentClass?.id && s.day_of_week === today)
+        .filter((s) => {
+          const [eh, em] = s.end_time.split(":").map(Number);
+          return eh * 60 + em > nowMin;
+        })
         .sort((a, b) => a.start_time.localeCompare(b.start_time)),
-    [schedules, currentClass, today]
+    [schedules, currentClass, today, nowMin]
   );
 
   const activeAnnouncements = useMemo(
