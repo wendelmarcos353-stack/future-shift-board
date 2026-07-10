@@ -3,6 +3,7 @@ import DigitalClock from "@/components/DigitalClock";
 import ClassTabs from "@/components/ClassTabs";
 import NewsTicker from "@/components/NewsTicker";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [hasExams, setHasExams] = useState(false);
