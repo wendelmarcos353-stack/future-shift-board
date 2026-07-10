@@ -230,20 +230,28 @@ export default function ClassTabs() {
                       }
                       return (
                         <div className="grid gap-2 animate-float-up">
-                          {daySchedules.map((s) => (
+                          {daySchedules.map((s) => {
+                            const avatar = teacherAvatar(s.teacher_id);
+                            return (
                             <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                               <div className="font-mono text-sm font-bold neon-text-cyan w-28">
                                 {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                               </div>
+                              {avatar ? (
+                                <img src={avatar} alt="" loading="lazy" className="h-8 w-8 rounded-full object-cover border border-primary/40" />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-xs">👤</div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <p className="font-display text-base">{s.subject}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {s.teacher_id ? (teachers[s.teacher_id] || "Professor") : "—"}
+                                  {teacherLabel(s.teacher_id)}
                                   {s.room ? ` · Sala ${s.room}` : ""}
                                 </p>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       );
                     })()}
