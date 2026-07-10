@@ -27,6 +27,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminLessons from "./pages/admin/AdminLessons";
 import AdminExams from "./pages/admin/AdminExams";
 import Exams from "./pages/Exams";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/tv" element={<TVMode />} />
             <Route path="/exams" element={<Exams />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/change-password" element={<ChangePassword />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />

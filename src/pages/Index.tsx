@@ -3,9 +3,11 @@ import DigitalClock from "@/components/DigitalClock";
 import ClassTabs from "@/components/ClassTabs";
 import NewsTicker from "@/components/NewsTicker";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [hasExams, setHasExams] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const check = async () => {
@@ -47,6 +49,15 @@ const Index = () => {
           <a href="/tv" className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-purple hover:bg-secondary/10 transition-all duration-300 hover:scale-105">
             📺 MODO TV
           </a>
+          {user ? (
+            <a href="/profile" className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-cyan hover:bg-secondary/10 transition-all duration-300 hover:scale-105">
+              👤 MEU PERFIL
+            </a>
+          ) : (
+            <a href="/auth" className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-cyan hover:bg-secondary/10 transition-all duration-300 hover:scale-105">
+              🔐 ENTRAR
+            </a>
+          )}
           <a href="/admin" className="font-display text-xs px-4 py-2 rounded glass-panel neon-text-cyan hover:bg-secondary/10 transition-all duration-300 hover:scale-105">
             ⚙ ADMIN
           </a>

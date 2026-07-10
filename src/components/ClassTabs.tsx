@@ -9,7 +9,8 @@ type Schedule = { id: string; class_id: string; teacher_id: string | null; subje
 type Lesson = { id: string; class_id: string; teacher_id: string | null; subject: string; room: string | null; lesson_date: string | null; day_of_week: number | null; start_time: string; end_time: string };
 type Announcement = { id: string; title: string; description: string | null; priority: string; target_scope: any; start_date: string | null; end_date: string | null; active: boolean };
 type Exam = { id: string; class_id: string; teacher_id: string | null; subject: string; room: string | null; exam_date: string; start_time: string | null; end_time: string | null; active: boolean };
-type Teacher = { id: string; display_name: string | null };
+type Teacher = { id: string; display_name: string | null; avatar_url: string | null };
+type TeacherInfo = { name: string; avatar: string | null };
 
 const isAnnActive = (a: Announcement) => {
   if (!a.active) return false;
@@ -32,7 +33,7 @@ export default function ClassTabs() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
-  const [teachers, setTeachers] = useState<Record<string, string>>({});
+  const [teachers, setTeachers] = useState<Record<string, TeacherInfo>>({});
   const [grade, setGrade] = useState<string>("1");
   const [classId, setClassId] = useState<string>("");
   const todayIdx = new Date().getDay();
@@ -56,8 +57,8 @@ export default function ClassTabs() {
       if (a.data) setAnnouncements(a.data as any);
       if (e.data) setExams(e.data as any);
       if (t.data) {
-        const m: Record<string, string> = {};
-        (t.data as Teacher[]).forEach((x) => { m[x.id] = x.display_name || ""; });
+        const m: Record<string, TeacherInfo> = {};
+        (t.data as Teacher[]).forEach((x) => { m[x.id] = { name: x.display_name || "", avatar: x.avatar_url }; });
         setTeachers(m);
       }
     };
@@ -113,8 +114,15 @@ export default function ClassTabs() {
   const teacherList = useMemo(() => {
     const ids = new Set<string>();
     classSchedules.forEach((s) => s.teacher_id && ids.add(s.teacher_id));
-    return Array.from(ids).map((id) => teachers[id] || "Professor").filter(Boolean);
+    return Array.from(ids).map((id) => teachers[id]).filter((t): t is TeacherInfo => !!t && !!t.name);
   }, [classSchedules, teachers]);
+
+  const teacherLabel = (id: string | null) => {
+    if (!id) return "Professor não informado";
+    const t = teachers[id];
+    return t?.name ? `Prof. ${t.name}` : "Professor não informado";
+  };
+  const teacherAvatar = (id: string | null) => (id ? teachers[id]?.avatar ?? null : null);
 
   if (classes.length === 0) {
     return <div className="glass-panel p-6 text-center text-muted-foreground">Carregando turmas…</div>;
@@ -155,20 +163,28 @@ export default function ClassTabs() {
                       <p className="text-sm text-muted-foreground">Sem aulas hoje.</p>
                     ) : (
                       <div className="grid gap-2">
-                        {todaySchedules.map((s) => (
+                        {todaySchedules.map((s) => {
+                          const avatar = teacherAvatar(s.teacher_id);
+                          return (
                           <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                             <div className="font-mono text-sm font-bold neon-text-cyan w-28">
                               {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                             </div>
+                            {avatar ? (
+                              <img src={avatar} alt="" loading="lazy" className="h-8 w-8 rounded-full object-cover border border-primary/40" />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-xs">👤</div>
+                            )}
                             <div className="flex-1 min-w-0">
                               <p className="font-display text-base">{s.subject}</p>
                               <p className="text-xs text-muted-foreground">
-                                {s.teacher_id ? (teachers[s.teacher_id] || "Professor") : "—"}
+                                {teacherLabel(s.teacher_id)}
                                 {s.room ? ` · Sala ${s.room}` : ""}
                               </p>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </section>
@@ -214,20 +230,28 @@ export default function ClassTabs() {
                       }
                       return (
                         <div className="grid gap-2 animate-float-up">
-                          {daySchedules.map((s) => (
+                          {daySchedules.map((s) => {
+                            const avatar = teacherAvatar(s.teacher_id);
+                            return (
                             <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                               <div className="font-mono text-sm font-bold neon-text-cyan w-28">
                                 {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                               </div>
+                              {avatar ? (
+                                <img src={avatar} alt="" loading="lazy" className="h-8 w-8 rounded-full object-cover border border-primary/40" />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-xs">👤</div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <p className="font-display text-base">{s.subject}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {s.teacher_id ? (teachers[s.teacher_id] || "Professor") : "—"}
+                                  {teacherLabel(s.teacher_id)}
                                   {s.room ? ` · Sala ${s.room}` : ""}
                                 </p>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       );
                     })()}
@@ -250,7 +274,7 @@ export default function ClassTabs() {
                               <p className="font-display text-sm">{l.subject}</p>
                               <p className="text-xs text-muted-foreground">
                                 {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
-                                {l.teacher_id ? ` · ${teachers[l.teacher_id] || "Professor"}` : ""}
+                                {l.teacher_id ? ` · ${teacherLabel(l.teacher_id)}` : ""}
                                 {l.room ? ` · Sala ${l.room}` : ""}
                               </p>
                             </div>
@@ -265,8 +289,15 @@ export default function ClassTabs() {
                     <section>
                       <h3 className="font-display text-sm neon-text-purple tracking-wider mb-2">👩‍🏫 PROFESSORES</h3>
                       <div className="flex flex-wrap gap-2">
-                        {teacherList.map((name, i) => (
-                          <span key={i} className="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-sm">{name}</span>
+                        {teacherList.map((t, i) => (
+                          <span key={i} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-sm">
+                            {t.avatar ? (
+                              <img src={t.avatar} alt="" loading="lazy" className="h-5 w-5 rounded-full object-cover" />
+                            ) : (
+                              <span className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px]">👤</span>
+                            )}
+                            Prof. {t.name}
+                          </span>
                         ))}
                       </div>
                     </section>
@@ -302,7 +333,7 @@ export default function ClassTabs() {
                               <p className="text-xs text-muted-foreground">
                                 {e.start_time ? `${e.start_time.slice(0, 5)}${e.end_time ? `–${e.end_time.slice(0, 5)}` : ""}` : ""}
                                 {e.room ? ` · Sala ${e.room}` : ""}
-                                {e.teacher_id && teachers[e.teacher_id] ? ` · ${teachers[e.teacher_id]}` : ""}
+                                {e.teacher_id ? ` · ${teacherLabel(e.teacher_id)}` : ""}
                               </p>
                             </div>
                           </div>

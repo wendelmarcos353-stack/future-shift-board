@@ -441,6 +441,8 @@ export type Database = {
         Row: {
           active: boolean
           avatar_url: string | null
+          bio: string | null
+          birth_date: string | null
           blocked_until: string | null
           created_at: string
           display_name: string | null
@@ -454,6 +456,8 @@ export type Database = {
         Insert: {
           active?: boolean
           avatar_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
           blocked_until?: string | null
           created_at?: string
           display_name?: string | null
@@ -467,6 +471,8 @@ export type Database = {
         Update: {
           active?: boolean
           avatar_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
           blocked_until?: string | null
           created_at?: string
           display_name?: string | null
@@ -699,14 +705,17 @@ export type Database = {
     Views: {
       teacher_directory: {
         Row: {
+          avatar_url: string | null
           display_name: string | null
           id: string | null
         }
         Insert: {
+          avatar_url?: string | null
           display_name?: string | null
           id?: string | null
         }
         Update: {
+          avatar_url?: string | null
           display_name?: string | null
           id?: string | null
         }
