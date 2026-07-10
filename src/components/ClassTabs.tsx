@@ -57,8 +57,8 @@ export default function ClassTabs() {
       if (a.data) setAnnouncements(a.data as any);
       if (e.data) setExams(e.data as any);
       if (t.data) {
-        const m: Record<string, string> = {};
-        (t.data as Teacher[]).forEach((x) => { m[x.id] = x.display_name || ""; });
+        const m: Record<string, TeacherInfo> = {};
+        (t.data as Teacher[]).forEach((x) => { m[x.id] = { name: x.display_name || "", avatar: x.avatar_url }; });
         setTeachers(m);
       }
     };
