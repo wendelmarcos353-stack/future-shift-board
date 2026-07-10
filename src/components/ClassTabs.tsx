@@ -333,7 +333,7 @@ export default function ClassTabs() {
                               <p className="text-xs text-muted-foreground">
                                 {e.start_time ? `${e.start_time.slice(0, 5)}${e.end_time ? `–${e.end_time.slice(0, 5)}` : ""}` : ""}
                                 {e.room ? ` · Sala ${e.room}` : ""}
-                                {e.teacher_id && teachers[e.teacher_id] ? ` · ${teachers[e.teacher_id]}` : ""}
+                                {e.teacher_id ? ` · ${teacherLabel(e.teacher_id)}` : ""}
                               </p>
                             </div>
                           </div>
