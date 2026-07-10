@@ -69,18 +69,24 @@ export default function TVMode() {
   useEffect(() => {
     const load = async () => {
       const today = new Date().toISOString().slice(0,10);
-      const [c, s, a, t, e] = await Promise.all([
+      const [c, s, a, t, e, tt] = await Promise.all([
         supabase.from("classes").select("*").eq("active", true).order("order_position"),
         supabase.from("schedules").select("*"),
         supabase.from("announcements").select("*"),
         supabase.from("tv_settings").select("*").limit(1).maybeSingle(),
         supabase.from("exams").select("*").eq("active", true).gte("exam_date", today).order("exam_date"),
+        supabase.from("teacher_directory").select("*"),
       ]);
       if (c.data) setClasses(c.data as any);
       if (s.data) setSchedules(s.data as any);
       if (a.data) setAnnouncements(a.data as any);
       if (t.data) setSettings(t.data as any);
       if (e.data) setExams(e.data as any);
+      if (tt.data) {
+        const m: Record<string, { name: string; avatar: string | null }> = {};
+        (tt.data as Teacher[]).forEach((x) => { m[x.id] = { name: x.display_name || "", avatar: x.avatar_url }; });
+        setTeachers(m);
+      }
     };
     load();
 
