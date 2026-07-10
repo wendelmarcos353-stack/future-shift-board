@@ -289,8 +289,15 @@ export default function ClassTabs() {
                     <section>
                       <h3 className="font-display text-sm neon-text-purple tracking-wider mb-2">👩‍🏫 PROFESSORES</h3>
                       <div className="flex flex-wrap gap-2">
-                        {teacherList.map((name, i) => (
-                          <span key={i} className="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-sm">{name}</span>
+                        {teacherList.map((t, i) => (
+                          <span key={i} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-sm">
+                            {t.avatar ? (
+                              <img src={t.avatar} alt="" loading="lazy" className="h-5 w-5 rounded-full object-cover" />
+                            ) : (
+                              <span className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px]">👤</span>
+                            )}
+                            Prof. {t.name}
+                          </span>
                         ))}
                       </div>
                     </section>
