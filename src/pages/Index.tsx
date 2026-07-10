@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [hasExams, setHasExams] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const check = async () => {
