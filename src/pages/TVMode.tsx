@@ -231,12 +231,14 @@ export default function TVMode() {
                 </h2>
                 {classSchedules.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center">
-                    <p className="font-display text-3xl text-muted-foreground">Sem aulas hoje</p>
+                    <p className="font-display text-3xl text-muted-foreground">Não há mais aulas hoje.</p>
                   </div>
                 ) : (
                   <div className="grid gap-3 overflow-y-auto">
                     {classSchedules.map((s) => {
                       const active = isCurrentClass(s);
+                      const t = s.teacher_id ? teachers[s.teacher_id] : null;
+                      const teacherName = t?.name ? `Prof. ${t.name}` : "Professor não informado";
                       return (
                         <div
                           key={s.id}
@@ -249,13 +251,18 @@ export default function TVMode() {
                           <div className={`font-display text-3xl font-bold ${active ? "neon-text-cyan" : "text-foreground"}`}>
                             {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
                           </div>
+                          {t?.avatar ? (
+                            <img src={t.avatar} alt="" loading="lazy" className="h-14 w-14 rounded-full object-cover border-2 border-primary/50" />
+                          ) : (
+                            <div className="h-14 w-14 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-2xl">👤</div>
+                          )}
                           <div className="flex-1">
                             <p className={`font-display text-2xl ${active ? "neon-text-pink" : "text-foreground"}`}>
                               {s.subject}
                             </p>
-                            {s.room && (
-                              <p className="font-body text-base text-muted-foreground">Sala: {s.room}</p>
-                            )}
+                            <p className="font-body text-base text-muted-foreground">
+                              {teacherName}{s.room ? `  ·  Sala ${s.room}` : ""}
+                            </p>
                           </div>
                           {active && (
                             <span className="font-display text-sm neon-text-cyan animate-pulse tracking-wider">
