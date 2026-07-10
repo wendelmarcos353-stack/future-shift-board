@@ -114,8 +114,15 @@ export default function ClassTabs() {
   const teacherList = useMemo(() => {
     const ids = new Set<string>();
     classSchedules.forEach((s) => s.teacher_id && ids.add(s.teacher_id));
-    return Array.from(ids).map((id) => teachers[id] || "Professor").filter(Boolean);
+    return Array.from(ids).map((id) => teachers[id]).filter((t): t is TeacherInfo => !!t && !!t.name);
   }, [classSchedules, teachers]);
+
+  const teacherLabel = (id: string | null) => {
+    if (!id) return "Professor não informado";
+    const t = teachers[id];
+    return t?.name ? `Prof. ${t.name}` : "Professor não informado";
+  };
+  const teacherAvatar = (id: string | null) => (id ? teachers[id]?.avatar ?? null : null);
 
   if (classes.length === 0) {
     return <div className="glass-panel p-6 text-center text-muted-foreground">Carregando turmas…</div>;
