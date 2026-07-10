@@ -9,7 +9,8 @@ type Schedule = { id: string; class_id: string; teacher_id: string | null; subje
 type Lesson = { id: string; class_id: string; teacher_id: string | null; subject: string; room: string | null; lesson_date: string | null; day_of_week: number | null; start_time: string; end_time: string };
 type Announcement = { id: string; title: string; description: string | null; priority: string; target_scope: any; start_date: string | null; end_date: string | null; active: boolean };
 type Exam = { id: string; class_id: string; teacher_id: string | null; subject: string; room: string | null; exam_date: string; start_time: string | null; end_time: string | null; active: boolean };
-type Teacher = { id: string; display_name: string | null };
+type Teacher = { id: string; display_name: string | null; avatar_url: string | null };
+type TeacherInfo = { name: string; avatar: string | null };
 
 const isAnnActive = (a: Announcement) => {
   if (!a.active) return false;
