@@ -53,6 +53,7 @@ type Exam = {
   id: string; class_id: string; subject: string; room: string | null;
   exam_date: string; start_time: string | null; end_time: string | null;
 };
+type Teacher = { id: string; display_name: string | null; avatar_url: string | null };
 
 export default function TVMode() {
   const [classes, setClasses] = useState<ClassRow[]>([]);
@@ -60,6 +61,7 @@ export default function TVMode() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [settings, setSettings] = useState<TvSettings | null>(null);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [teachers, setTeachers] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const [idx, setIdx] = useState(0);
   const [fade, setFade] = useState(true);
   const [now, setNow] = useState(new Date());
