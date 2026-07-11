@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
+import { toastSupaError } from "@/lib/supaError";
+import { useAuth } from "@/hooks/useAuth";
 
 type Cls = { id: string; name: string; grade: number };
 type Ann = {
@@ -23,6 +25,7 @@ type Ann = {
 };
 
 export default function AdminAnnouncements() {
+  const { user } = useAuth();
   const [classes, setClasses] = useState<Cls[]>([]);
   const [items, setItems] = useState<Ann[]>([]);
   const [form, setForm] = useState({
@@ -47,6 +50,7 @@ export default function AdminAnnouncements() {
 
   const add = async () => {
     if (!form.title) return toast.error("Título obrigatório");
+    if (!user) return toast.error("Você precisa estar autenticado");
     const target_scope =
       form.target_type === "all"
         ? { type: "all" }
@@ -59,21 +63,24 @@ export default function AdminAnnouncements() {
       priority: form.priority,
       target_scope,
       end_date: form.end_date || null,
+      created_by: user.id,
     });
-    if (error) return toast.error(error.message);
+    if (error) return toastSupaError(error, { table: "announcements", op: "INSERT", action: "criar aviso" });
     setForm({ ...form, title: "", description: "", end_date: "" });
     toast.success("Aviso criado");
     load();
   };
 
   const toggle = async (id: string, active: boolean) => {
-    await supabase.from("announcements").update({ active }).eq("id", id);
+    const { error } = await supabase.from("announcements").update({ active }).eq("id", id);
+    if (error) return toastSupaError(error, { table: "announcements", op: "UPDATE", action: "atualizar aviso" });
     load();
   };
 
   const remove = async (id: string) => {
     if (!confirm("Excluir aviso?")) return;
-    await supabase.from("announcements").delete().eq("id", id);
+    const { error } = await supabase.from("announcements").delete().eq("id", id);
+    if (error) return toastSupaError(error, { table: "announcements", op: "DELETE", action: "excluir aviso" });
     load();
   };
 

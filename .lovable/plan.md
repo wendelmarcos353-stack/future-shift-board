@@ -1,67 +1,53 @@
-## Plano — Plataforma Escolar Administrável (Future Shift Board v2)
+# Plano de correção — RLS, Edge Functions e Permissões
 
-O escopo é grande. Vou entregar em **3 fases** para que cada uma seja revisada e funcione de ponta a ponta. Posso começar pela Fase 1 imediatamente após sua aprovação.
+## Situação atual (após análise)
 
----
+O banco já tem uma estrutura sólida de papéis (`master`, `admin`, `secretary`, `teacher`, `student`, `user`, `visitor`) via `user_roles` + `has_role()` + `is_admin_level()`. Todas as tabelas principais (`announcements`, `schedules`, `classes`, `contents`, `exams`, `lessons`, `media`, `profiles`, `menu_pages`, `permissions`, `categories`, `teacher_classes`, `student_classes`) já têm RLS ativa com políticas por papel. **Não há um erro reproduzível informado** — sem saber qual tela/ação falha, uma "refatoração total de RLS" é arriscada: pode quebrar fluxos que hoje funcionam (admin, secretaria, TV).
 
-### Fase 1 — Fundação: Auth, Perfis, Turmas, Horários, Modo TV dinâmico
+Por isso este plano foca em **causas mais prováveis do erro RLS** e em **visibilidade de erros**, sem reescrever o modelo de papéis que já existe.
 
-**Backend (migrations)**
-- Enum `app_role` ampliado: `master`, `admin`, `secretary`, `teacher`, `student`, `visitor` (mantém compat com `admin`/`user` atuais)
-- `profiles`: + `must_change_password boolean`, `active boolean`, `phone`
-- `classes` (id, name, grade, active)
-- `teachers` (user_id, subject)
-- `student_classes` (user_id, class_id) — vínculo aluno↔turma
-- `teacher_classes` (user_id, class_id) — vínculo professor↔turma
-- `schedules` (class_id, teacher_id, subject, room, day_of_week 0-6, start_time, end_time, content_taught, notes)
-- `announcements` (title, description, priority, target_scope jsonb {all|grade|class_ids[]}, start_date, end_date, active)
-- `menu_pages` (title, slug, icon, color, order_position, visibility jsonb {roles[]})
-- `tv_settings` (singleton: rotation_seconds, theme, logo_url, background_url, show_clock, show_news, show_announcements)
-- `audit_logs` (user_id, action, module, old_value jsonb, new_value jsonb, created_at, ip)
-- Função `has_any_role(_user_id, _roles app_role[])`
-- RLS por perfil em cada tabela; GRANTs corretos; triggers `updated_at`; trigger genérico de auditoria nas tabelas principais
-- Realtime habilitado em `schedules`, `announcements`, `tv_settings`
-- Seed: turmas 1A–1D, 2A–2D, 3A–3D + usuário **Master** (`admin@escola.com` / `Admin@123`, `must_change_password=true`)
+## O que será feito
 
-**Frontend**
-- `useAuth` estendido com `roles[]`, `hasRole()`, `mustChangePassword`
-- Página `/auth/change-password` obrigatória no primeiro login
-- Página `/auth/forgot-password` + `/auth/reset-password`
-- `ProtectedRoute` com checagem por roles
-- `/admin` reorganizado: Dashboard, Usuários, Turmas, Horários, Conteúdos, Avisos, Menu, Modo TV, Auditoria, Configurações
-- `/tv` (página dedicada, fullscreen, sem menus):
-  - Rotação automática das 12 turmas (intervalo de `tv_settings.rotation_seconds`, padrão 30s)
-  - Painel lateral direito de avisos (oculto quando não há avisos ativos → conteúdo ocupa 100%)
-  - Filtragem de avisos por turma exibida
-  - Relógio grande, data, transições suaves, realtime subscription
+### 1. Melhor diagnóstico de erros (frontend)
+Criar helper `src/lib/supaError.ts` com `describeSupaError(err, { table, op })` que devolve mensagem clara:
+- Tabela, operação (INSERT/UPDATE/DELETE), motivo real do Postgres
+- Detecta `42501` / "row-level security" e explica "sem permissão para esta ação neste registro"
+- Loga stack completo no console
 
----
+Aplicar nas telas de escrita que hoje usam `toast.error(e.message)` genérico: `AdminAnnouncements`, `AdminSchedules`, `AdminExams`, `AdminLessons`, `AdminContents`, `AdminClasses`, `AdminMedia`, `AdminCategories`, `AdminSettings`, `AdminTvSettings`, `Profile`.
 
-### Fase 2 — Lançamento de Aulas & Portais
+### 2. Garantir `created_by` / `user_id` nos inserts
+Verificar cada `.insert(...)` das telas admin: adicionar `created_by: user.id` quando a coluna existir e estiver `NOT NULL` ou for exigida pela política. Migração leve para preencher default `auth.uid()` em colunas `created_by` de `announcements`, `contents`, `lessons`, `exams` quando ausente — evita esquecimento no cliente.
 
-- `/secretary/schedules` — grade semanal por turma, criar/editar horários
-- `/teacher` — minhas aulas, lançar conteúdo ministrado, atividades, observações
-- `/student` — meus horários, avisos da minha turma, conteúdos
-- Filtros de avisos por: todas / ano (1º,2º,3º) / turma específica
-- Menu dinâmico carregado de `menu_pages` com filtro por role
+### 3. Ajuste de política para `visitor`
+Hoje um usuário recém-criado com papel `visitor` ou `user` só consegue editar o próprio `profiles` — o que já atende o requisito. Vou **apenas confirmar** que:
+- `profiles`: SELECT/UPDATE próprios ✓ (já existe)
+- Todas as tabelas admin negam escrita para papéis não-staff ✓ (já existe)
 
----
+Nenhuma migração de papéis nova aqui — o modelo já corresponde ao pedido.
 
-### Fase 3 — Auditoria, Backup, Exportações
+### 4. Ocultar botões de admin para não-staff
+No `AdminLayout`/rotas, já existe `ProtectedAdminRoute`. Adicionar no `Index.tsx` / header: só mostrar link "Admin" quando `isAdmin || hasRole('secretary','teacher')`. Nas telas admin com ações de criar/editar, envolver botões com verificação de `hasRole` para esconder botões que a política do banco negaria.
 
-- Tela `/admin/audit` com filtros (usuário, módulo, período)
-- Edge Function `backup-export` (JSON completo do schema público)
-- Exportação CSV/Excel/PDF por módulo (usuários, horários, avisos)
-- Cron diário de snapshot em storage `backups/`
+### 5. Edge Functions
+Revisar `admin-users` e `parse-schedule`:
+- Confirmar que retornam sempre `Response` com CORS mesmo em erros
+- Adicionar mensagem detalhada no JSON de erro (mensagem + código)
+- Logs de entrada/saída
 
----
+Sem trocar o `verify_jwt` (deploy padrão). Sem novos secrets.
 
-### Fora de escopo desta entrega
-- WYSIWYG completo (mantém markdown leve)
-- App mobile nativo
-- Notificações push / e-mail transacional (pode ser adicionado depois com Lovable Email)
-- SSO externo (Google/Apple) — adicionável sob demanda
+## O que NÃO será feito (fora do escopo prático)
 
----
+- **Refatorar todo o sistema de papéis**: já está implementado e corresponde ao pedido. Reescrever quebraria fluxos existentes sem ganho.
+- **Novo cargo "Direção"**: mapeia para `master`/`admin` já existentes.
+- **Fluxo de aprovação de cadastro**: sistema atual já cria com papel `user` via trigger `handle_new_user`; posso trocar para `visitor` se você confirmar.
 
-**Confirma para eu começar pela Fase 1?** Se preferir, posso já incluir Google sign-in na Fase 1 (recomendado) ou priorizar outro bloco antes.
+## Arquivos afetados (estimativa)
+- Novo: `src/lib/supaError.ts`
+- Editados: ~10 páginas admin + `Index.tsx` + 2 edge functions
+- 1 migração pequena (defaults `created_by`)
+
+## Confirme antes de eu implementar
+1. Papel default no cadastro deve virar **`visitor`** (hoje é `user`)? Sim/Não
+2. Você tem uma **tela/ação específica** onde vê o erro RLS ou o erro "non-2xx"? Se souber, cite — direciono a correção. Se não souber, sigo o plano acima.
