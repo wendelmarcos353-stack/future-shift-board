@@ -106,7 +106,7 @@ export default function Profile() {
     if (pwd.next.length < 8) return toast({ title: "Senha fraca", description: "Mínimo 8 caracteres.", variant: "destructive" });
     if (pwd.next !== pwd.confirm) return toast({ title: "Senhas diferentes", variant: "destructive" });
     const { error } = await supabase.auth.updateUser({ password: pwd.next });
-    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Erro ao alterar senha", description: error.message, variant: "destructive" });
     setPwd({ current: "", next: "", confirm: "" });
     toast({ title: "Senha alterada" });
   };
