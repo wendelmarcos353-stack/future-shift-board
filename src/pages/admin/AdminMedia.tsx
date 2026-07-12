@@ -7,6 +7,7 @@ import { Upload, Trash2, FileText, Film } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import ScheduleImporter from "@/components/admin/ScheduleImporter";
+import { toastSupaError } from "@/lib/supaError";
 
 type Media = {
   id: string;
@@ -30,16 +31,18 @@ export default function AdminMedia() {
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
+    if (!user) return toast.error("Você precisa estar autenticado");
     setUploading(true);
     for (const f of files) {
       const ext = f.name.split(".").pop();
       const path = `${user?.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const up = await supabase.storage.from("media").upload(path, f);
-      if (up.error) { toast.error(up.error.message); continue; }
+      if (up.error) { toastSupaError(up.error, { table: "storage", op: "UPLOAD", action: "enviar mídia" }); continue; }
       const { data } = supabase.storage.from("media").getPublicUrl(path);
-      await supabase.from("media").insert({
+      const { error } = await supabase.from("media").insert({
         file_name: f.name, file_url: data.publicUrl, file_type: f.type, file_size: f.size, uploaded_by: user?.id,
       });
+      if (error) toastSupaError(error, { table: "media", op: "INSERT", action: "registrar mídia" });
     }
     setUploading(false);
     toast.success("Upload concluído");
@@ -53,7 +56,8 @@ export default function AdminMedia() {
       const path = m.file_url.substring(idx + "/media/".length);
       await supabase.storage.from("media").remove([path]);
     }
-    await supabase.from("media").delete().eq("id", m.id);
+    const { error } = await supabase.from("media").delete().eq("id", m.id);
+    if (error) return toastSupaError(error, { table: "media", op: "DELETE", action: "excluir mídia" });
     toast.success("Removido");
     load();
   };

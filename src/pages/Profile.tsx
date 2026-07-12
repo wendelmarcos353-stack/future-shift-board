@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { describeSupaError } from "@/lib/supaError";
 
 const profileSchema = z.object({
   display_name: z.string().trim().min(1, "Nome obrigatório").max(120),
@@ -60,7 +61,7 @@ export default function Profile() {
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "png";
-      const path = `avatars/${user.id}-${Date.now()}.${ext}`;
+      const path = `avatars/${user.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true, contentType: file.type });
       if (error) throw error;
       const { data } = supabase.storage.from("media").getPublicUrl(path);
@@ -70,7 +71,7 @@ export default function Profile() {
       setForm((f) => ({ ...f, avatar_url: url }));
       toast({ title: "Foto atualizada" });
     } catch (e: any) {
-      toast({ title: "Falha ao enviar", description: e.message, variant: "destructive" });
+      toast({ title: "Falha ao enviar", description: describeSupaError(e, { table: "storage", op: "UPLOAD", action: "enviar foto de perfil" }), variant: "destructive" });
     } finally {
       setUploading(false);
     }
@@ -78,7 +79,7 @@ export default function Profile() {
 
   const removeAvatar = async () => {
     const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
-    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Erro", description: describeSupaError(error, { table: "profiles", op: "UPDATE", action: "remover foto do perfil" }), variant: "destructive" });
     setForm((f) => ({ ...f, avatar_url: "" }));
     toast({ title: "Foto removida" });
   };
@@ -97,7 +98,7 @@ export default function Profile() {
       birth_date: form.birth_date || null,
     } as any).eq("id", user.id);
     setSaving(false);
-    if (error) return toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Erro ao salvar", description: describeSupaError(error, { table: "profiles", op: "UPDATE", action: "salvar perfil" }), variant: "destructive" });
     toast({ title: "Perfil atualizado" });
   };
 

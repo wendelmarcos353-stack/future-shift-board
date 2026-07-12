@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Upload, X, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { toastSupaError } from "@/lib/supaError";
 
 type Category = { id: string; name: string };
 
@@ -53,21 +54,29 @@ export default function AdminContentForm() {
   }, [id, isEdit]);
 
   const uploadFile = async (file: File): Promise<string | null> => {
+    if (!user) {
+      toast.error("Você precisa estar autenticado");
+      return null;
+    }
     const ext = file.name.split(".").pop();
     const path = `${user?.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from("media").upload(path, file);
     if (error) {
-      toast.error(error.message);
+      toastSupaError(error, { table: "storage", op: "UPLOAD", action: "enviar arquivo" });
       return null;
     }
     const { data } = supabase.storage.from("media").getPublicUrl(path);
-    await supabase.from("media").insert({
+    const mediaResult = await supabase.from("media").insert({
       file_name: file.name,
       file_url: data.publicUrl,
       file_type: file.type,
       file_size: file.size,
       uploaded_by: user?.id,
     });
+    if (mediaResult.error) {
+      toastSupaError(mediaResult.error, { table: "media", op: "INSERT", action: "registrar arquivo" });
+      return null;
+    }
     return data.publicUrl;
   };
 
@@ -114,7 +123,7 @@ export default function AdminContentForm() {
     }
     setSaving(false);
     if (result.error) {
-      if (!silent) toast.error(result.error.message);
+      if (!silent) toastSupaError(result.error, { table: "contents", op: isEdit ? "UPDATE" : "INSERT", action: "salvar conteúdo" });
       return;
     }
     setSavedStatus(`Salvo às ${new Date().toLocaleTimeString("pt-BR")}`);

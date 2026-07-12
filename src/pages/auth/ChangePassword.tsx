@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { toastSupaError } from "@/lib/supaError";
 
 export default function ChangePassword() {
   const { user, refresh } = useAuth();
@@ -26,7 +27,12 @@ export default function ChangePassword() {
       return;
     }
     if (user) {
-      await supabase.from("profiles").update({ must_change_password: false }).eq("id", user.id);
+      const { error: profileError } = await supabase.from("profiles").update({ must_change_password: false }).eq("id", user.id);
+      if (profileError) {
+        toastSupaError(profileError, { table: "profiles", op: "UPDATE", action: "finalizar troca de senha" });
+        setLoading(false);
+        return;
+      }
     }
     await refresh();
     toast.success("Senha alterada com sucesso");

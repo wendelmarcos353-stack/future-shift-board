@@ -14,6 +14,7 @@ import {
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { toastSupaError } from "@/lib/supaError";
 
 type Cls = { id: string; name: string; order_position: number };
 type Lesson = {
@@ -84,7 +85,7 @@ export default function AdminLessons() {
     const res = editingId
       ? await supabase.from("lessons").update(payload).eq("id", editingId)
       : await supabase.from("lessons").insert({ ...payload, created_by: user?.id });
-    if (res.error) return toast.error(res.error.message);
+    if (res.error) return toastSupaError(res.error, { table: "lessons", op: editingId ? "UPDATE" : "INSERT", action: "salvar aula" });
     toast.success("Salvo");
     setOpen(false);
   };
@@ -92,7 +93,7 @@ export default function AdminLessons() {
   const remove = async (id: string) => {
     if (!confirm("Excluir aula?")) return;
     const { error } = await supabase.from("lessons").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return toastSupaError(error, { table: "lessons", op: "DELETE", action: "excluir aula" });
     toast.success("Excluída");
   };
 

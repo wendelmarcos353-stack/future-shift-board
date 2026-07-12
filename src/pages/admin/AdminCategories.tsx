@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { toastSupaError } from "@/lib/supaError";
 
 type Category = { id: string; name: string; icon: string | null; color: string | null };
 
@@ -43,7 +44,7 @@ export default function AdminCategories() {
     const res = editing
       ? await supabase.from("categories").update(payload).eq("id", editing.id)
       : await supabase.from("categories").insert(payload);
-    if (res.error) toast.error(res.error.message);
+    if (res.error) toastSupaError(res.error, { table: "categories", op: editing ? "UPDATE" : "INSERT", action: "salvar categoria" });
     else {
       toast.success("Salvo");
       setOpen(false);
@@ -54,7 +55,7 @@ export default function AdminCategories() {
   const remove = async (id: string) => {
     if (!confirm("Excluir categoria?")) return;
     const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) toastSupaError(error, { table: "categories", op: "DELETE", action: "excluir categoria" });
     else { toast.success("Excluída"); load(); }
   };
 
