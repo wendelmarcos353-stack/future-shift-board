@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { toastSupaError } from "@/lib/supaError";
 
 export default function AdminTvSettings() {
   const [settings, setSettings] = useState<any>(null);
@@ -27,7 +28,7 @@ export default function AdminTvSettings() {
       show_news: settings.show_news,
       theme: settings.theme,
     }).eq("id", settings.id);
-    if (error) return toast.error(error.message);
+    if (error) return toastSupaError(error, { table: "tv_settings", op: "UPDATE", action: "salvar configurações do Modo TV" });
     toast.success("Configurações salvas");
   };
 

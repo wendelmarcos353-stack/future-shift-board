@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
+import { toastSupaError } from "@/lib/supaError";
 
 type Cls = { id: string; name: string; grade: number; active: boolean; order_position: number };
 
@@ -25,20 +26,22 @@ export default function AdminClasses() {
     if (!name) return;
     const order = items.length + 1;
     const { error } = await supabase.from("classes").insert({ name, grade, order_position: order });
-    if (error) return toast.error(error.message);
+    if (error) return toastSupaError(error, { table: "classes", op: "INSERT", action: "criar turma" });
     setName("");
     toast.success("Turma criada");
     load();
   };
 
   const toggle = async (id: string, active: boolean) => {
-    await supabase.from("classes").update({ active }).eq("id", id);
+    const { error } = await supabase.from("classes").update({ active }).eq("id", id);
+    if (error) return toastSupaError(error, { table: "classes", op: "UPDATE", action: "atualizar turma" });
     load();
   };
 
   const remove = async (id: string) => {
     if (!confirm("Excluir turma?")) return;
-    await supabase.from("classes").delete().eq("id", id);
+    const { error } = await supabase.from("classes").delete().eq("id", id);
+    if (error) return toastSupaError(error, { table: "classes", op: "DELETE", action: "excluir turma" });
     load();
   };
 

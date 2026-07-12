@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, Trash2, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastSupaError } from "@/lib/supaError";
+import { useAuth } from "@/hooks/useAuth";
 
 const DAY_MAP: Record<string, number> = {
   "domingo": 0, "segunda": 1, "segunda-feira": 1, "terca": 2, "terça": 2, "terca-feira": 2, "terça-feira": 2,
@@ -54,6 +56,7 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export default function ScheduleImporter() {
+  const { user, isAdmin, hasRole } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -139,6 +142,7 @@ export default function ScheduleImporter() {
 
   const confirmSave = async () => {
     if (rows.length === 0) return;
+    if (!user) return toast.error("Você precisa estar autenticado");
     // Validate
     const invalid: number[] = [];
     rows.forEach((r, i) => {
@@ -154,6 +158,7 @@ export default function ScheduleImporter() {
 
     setSaving(true);
     try {
+      const teacherScoped = hasRole("teacher") && !isAdmin && !hasRole("secretary");
       const payload = rows.map((r) => ({
         class_id: resolveClassId(r.class_name)!,
         subject: r.subject,
@@ -161,6 +166,7 @@ export default function ScheduleImporter() {
         day_of_week: r.day_of_week,
         start_time: r.start_time.length === 5 ? `${r.start_time}:00` : r.start_time,
         end_time: r.end_time.length === 5 ? `${r.end_time}:00` : r.end_time,
+        teacher_id: teacherScoped ? user.id : null,
       }));
       const { error } = await supabase.from("schedules").insert(payload);
       if (error) throw error;
@@ -170,7 +176,7 @@ export default function ScheduleImporter() {
       setProgress(0);
       setStatus("");
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao salvar");
+      toastSupaError(e, { table: "schedules", op: "INSERT", action: "importar horários" });
     } finally {
       setSaving(false);
     }

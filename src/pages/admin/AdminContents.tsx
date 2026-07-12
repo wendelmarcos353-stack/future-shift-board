@@ -10,6 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toastSupaError } from "@/lib/supaError";
 
 type Content = {
   id: string;
@@ -55,7 +56,7 @@ export default function AdminContents() {
   const handleDelete = async () => {
     if (!toDelete) return;
     const { error } = await supabase.from("contents").delete().eq("id", toDelete);
-    if (error) toast.error(error.message);
+    if (error) toastSupaError(error, { table: "contents", op: "DELETE", action: "excluir conteúdo" });
     else {
       toast.success("Conteúdo excluído");
       load();

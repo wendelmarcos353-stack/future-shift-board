@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { toastSupaError } from "@/lib/supaError";
 
 type Settings = {
   id?: string;
@@ -56,7 +57,7 @@ export default function AdminSettings() {
       ? await supabase.from("site_settings").update(payload).eq("id", s.id)
       : await supabase.from("site_settings").insert(payload);
     setLoading(false);
-    if (res.error) toast.error(res.error.message);
+    if (res.error) toastSupaError(res.error, { table: "site_settings", op: s.id ? "UPDATE" : "INSERT", action: "salvar configurações do site" });
     else toast.success("Configurações salvas");
   };
 

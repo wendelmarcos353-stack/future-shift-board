@@ -14,6 +14,7 @@ import {
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { toastSupaError } from "@/lib/supaError";
 
 type Cls = { id: string; name: string; order_position: number };
 type Lesson = {
@@ -38,7 +39,7 @@ const empty = (): Partial<Lesson> => ({
 });
 
 export default function AdminLessons() {
-  const { user } = useAuth();
+  const { user, isAdmin, hasRole } = useAuth();
   const [classes, setClasses] = useState<Cls[]>([]);
   const [items, setItems] = useState<Lesson[]>([]);
   const [filterClass, setFilterClass] = useState<string>("all");
@@ -69,6 +70,7 @@ export default function AdminLessons() {
     if (!form.class_id || !form.subject || !form.start_time || !form.end_time) {
       return toast.error("Preencha turma, disciplina e horários");
     }
+    const teacherScoped = hasRole("teacher") && !isAdmin && !hasRole("secretary");
     const payload: any = {
       class_id: form.class_id,
       subject: form.subject,
@@ -79,12 +81,12 @@ export default function AdminLessons() {
       end_time: form.end_time,
       content: form.content || null,
       notes: form.notes || null,
-      teacher_id: form.teacher_id || user?.id || null,
+      teacher_id: form.teacher_id || (teacherScoped ? user?.id : null),
     };
     const res = editingId
       ? await supabase.from("lessons").update(payload).eq("id", editingId)
       : await supabase.from("lessons").insert({ ...payload, created_by: user?.id });
-    if (res.error) return toast.error(res.error.message);
+    if (res.error) return toastSupaError(res.error, { table: "lessons", op: editingId ? "UPDATE" : "INSERT", action: "salvar aula" });
     toast.success("Salvo");
     setOpen(false);
   };
@@ -92,7 +94,7 @@ export default function AdminLessons() {
   const remove = async (id: string) => {
     if (!confirm("Excluir aula?")) return;
     const { error } = await supabase.from("lessons").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return toastSupaError(error, { table: "lessons", op: "DELETE", action: "excluir aula" });
     toast.success("Excluída");
   };
 

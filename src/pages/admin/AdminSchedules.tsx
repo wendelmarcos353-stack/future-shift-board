@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
+import { toastSupaError } from "@/lib/supaError";
+import { useAuth } from "@/hooks/useAuth";
 
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
@@ -22,6 +24,7 @@ type Schedule = {
 };
 
 export default function AdminSchedules() {
+  const { user, isAdmin, hasRole } = useAuth();
   const [classes, setClasses] = useState<Cls[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [classId, setClassId] = useState<string>("");
@@ -47,8 +50,14 @@ export default function AdminSchedules() {
 
   const add = async () => {
     if (!classId || !form.subject) return toast.error("Preencha turma e disciplina");
-    const { error } = await supabase.from("schedules").insert({ class_id: classId, ...form });
-    if (error) return toast.error(error.message);
+    if (!user) return toast.error("Você precisa estar autenticado");
+    const teacherScoped = hasRole("teacher") && !isAdmin && !hasRole("secretary");
+    const { error } = await supabase.from("schedules").insert({
+      class_id: classId,
+      ...form,
+      teacher_id: teacherScoped ? user.id : null,
+    });
+    if (error) return toastSupaError(error, { table: "schedules", op: "INSERT", action: "salvar horário" });
     setForm({ ...form, subject: "", room: "" });
     toast.success("Aula adicionada");
     load();
@@ -56,7 +65,8 @@ export default function AdminSchedules() {
 
   const remove = async (id: string) => {
     if (!confirm("Excluir aula?")) return;
-    await supabase.from("schedules").delete().eq("id", id);
+    const { error } = await supabase.from("schedules").delete().eq("id", id);
+    if (error) return toastSupaError(error, { table: "schedules", op: "DELETE", action: "excluir horário" });
     load();
   };
 
