@@ -60,16 +60,22 @@ export default function Profile() {
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "png";
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const hadPrevious = !!form.avatar_url;
       const path = `avatars/${user.id}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true, contentType: file.type });
-      if (error) throw error;
+      const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (error) {
+        if (/row-level security|not authorized|Unauthorized/i.test(error.message)) {
+          throw new Error("Você não tem permissão para alterar a foto de outro usuário.");
+        }
+        throw error;
+      }
       const { data } = supabase.storage.from("media").getPublicUrl(path);
       const url = data.publicUrl;
       const { error: uErr } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
       if (uErr) throw uErr;
       setForm((f) => ({ ...f, avatar_url: url }));
-      toast({ title: "Foto atualizada" });
+      toast({ title: hadPrevious ? "Foto atualizada com sucesso." : "Foto de perfil enviada com sucesso." });
     } catch (e: any) {
       toast({ title: "Falha ao enviar", description: describeSupaError(e, { table: "storage", op: "UPLOAD", action: "enviar foto de perfil" }), variant: "destructive" });
     } finally {
@@ -81,7 +87,7 @@ export default function Profile() {
     const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
     if (error) return toast({ title: "Erro", description: describeSupaError(error, { table: "profiles", op: "UPDATE", action: "remover foto do perfil" }), variant: "destructive" });
     setForm((f) => ({ ...f, avatar_url: "" }));
-    toast({ title: "Foto removida" });
+    toast({ title: "Foto removida com sucesso." });
   };
 
   const save = async () => {
