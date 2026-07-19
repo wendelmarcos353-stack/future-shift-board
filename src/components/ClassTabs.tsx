@@ -34,6 +34,7 @@ export default function ClassTabs() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
   const [teachers, setTeachers] = useState<Record<string, TeacherInfo>>({});
+  const [subjectMap, setSubjectMap] = useState<Record<string, string>>({});
   const [grade, setGrade] = useState<string>("1");
   const [classId, setClassId] = useState<string>("");
   const todayIdx = new Date().getDay();
