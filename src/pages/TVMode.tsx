@@ -62,6 +62,7 @@ export default function TVMode() {
   const [settings, setSettings] = useState<TvSettings | null>(null);
   const [exams, setExams] = useState<Exam[]>([]);
   const [teachers, setTeachers] = useState<Record<string, { name: string; avatar: string | null }>>({});
+  const [subjectMap, setSubjectMap] = useState<Record<string, string>>({});
   const [idx, setIdx] = useState(0);
   const [fade, setFade] = useState(true);
   const [now, setNow] = useState(new Date());
