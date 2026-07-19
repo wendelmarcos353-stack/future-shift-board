@@ -70,13 +70,14 @@ export default function TVMode() {
   useEffect(() => {
     const load = async () => {
       const today = new Date().toISOString().slice(0,10);
-      const [c, s, a, t, e, tt] = await Promise.all([
+      const [c, s, a, t, e, tt, ts] = await Promise.all([
         supabase.from("classes").select("*").eq("active", true).order("order_position"),
         supabase.from("schedules").select("*"),
         supabase.from("announcements").select("*"),
         supabase.from("tv_settings").select("*").limit(1).maybeSingle(),
         supabase.from("exams").select("*").eq("active", true).gte("exam_date", today).order("exam_date"),
         supabase.from("teacher_directory").select("*"),
+        supabase.from("teacher_subjects").select("class_id,subject,teacher_id"),
       ]);
       if (c.data) setClasses(c.data as any);
       if (s.data) setSchedules(s.data as any);
@@ -88,6 +89,14 @@ export default function TVMode() {
         (tt.data as Teacher[]).forEach((x) => { m[x.id] = { name: x.display_name || "", avatar: x.avatar_url }; });
         setTeachers(m);
       }
+      if (ts.data) {
+        const m: Record<string, string> = {};
+        (ts.data as { class_id: string | null; subject: string; teacher_id: string }[]).forEach((r) => {
+          if (r.class_id) m[`${r.class_id}::${r.subject}`] = r.teacher_id;
+          m[`*::${r.subject}`] = m[`*::${r.subject}`] || r.teacher_id;
+        });
+        setSubjectMap(m);
+      }
     };
     load();
 
@@ -98,6 +107,7 @@ export default function TVMode() {
       .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "tv_settings" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "exams" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "teacher_subjects" }, load)
       .subscribe();
 
     return () => { supabase.removeChannel(ch); };
