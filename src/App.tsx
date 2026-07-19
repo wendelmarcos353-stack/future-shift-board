@@ -26,6 +26,7 @@ import AdminTvSettings from "./pages/admin/AdminTvSettings";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminLessons from "./pages/admin/AdminLessons";
 import AdminExams from "./pages/admin/AdminExams";
+import AdminTeacherSubjects from "./pages/admin/AdminTeacherSubjects";
 import Exams from "./pages/Exams";
 import Profile from "./pages/Profile";
 
