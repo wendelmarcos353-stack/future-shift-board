@@ -44,7 +44,7 @@ export default function ClassTabs() {
   useEffect(() => {
     const load = async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const [c, s, l, a, e, t] = await Promise.all([
+      const [c, s, l, a, e, t, ts] = await Promise.all([
         supabase.from("classes").select("*").eq("active", true).order("order_position"),
         supabase.from("schedules").select("*"),
         supabase.from("lessons").select("*").gte("lesson_date", today),
@@ -63,6 +63,14 @@ export default function ClassTabs() {
         (t.data as Teacher[]).forEach((x) => { m[x.id] = { name: x.display_name || "", avatar: x.avatar_url }; });
         setTeachers(m);
       }
+      if (ts.data) {
+        const m: Record<string, string> = {};
+        (ts.data as { class_id: string | null; subject: string; teacher_id: string }[]).forEach((r) => {
+          if (r.class_id) m[`${r.class_id}::${r.subject}`] = r.teacher_id;
+          m[`*::${r.subject}`] = m[`*::${r.subject}`] || r.teacher_id;
+        });
+        setSubjectMap(m);
+      }
     };
     load();
     const ch = supabase
@@ -72,6 +80,7 @@ export default function ClassTabs() {
       .on("postgres_changes", { event: "*", schema: "public", table: "lessons" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "exams" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "teacher_subjects" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
