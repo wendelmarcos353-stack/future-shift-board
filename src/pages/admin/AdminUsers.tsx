@@ -144,8 +144,19 @@ export default function AdminUsers() {
                 return (
                   <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-900/60">
                     <td className="p-3">
-                      <div className="font-medium">{u.profile?.display_name ?? "—"}</div>
-                      <div className="text-zinc-500 text-xs">{u.email}</div>
+                      <div className="flex items-center gap-3">
+                        {u.profile?.avatar_url ? (
+                          <img src={u.profile.avatar_url} alt="" loading="lazy" className="h-9 w-9 rounded-full object-cover border border-zinc-700" />
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-sm">
+                            {(u.profile?.display_name || u.email || "?").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-medium">{u.profile?.display_name ?? "—"}</div>
+                          <div className="text-zinc-500 text-xs">{u.email}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
