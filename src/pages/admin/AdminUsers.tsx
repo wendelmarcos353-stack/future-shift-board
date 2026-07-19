@@ -19,7 +19,7 @@ type AdminUser = {
   email: string | null;
   created_at: string;
   last_sign_in_at: string | null;
-  profile: { display_name: string | null; active: boolean; blocked_until: string | null; phone: string | null } | null;
+  profile: { display_name: string | null; active: boolean; blocked_until: string | null; phone: string | null; avatar_url: string | null } | null;
   roles: AppRole[];
 };
 
