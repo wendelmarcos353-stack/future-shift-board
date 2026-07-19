@@ -122,18 +122,38 @@ export default function ClassTabs() {
   );
   const classExams = useMemo(() => exams.filter((e) => e.class_id === classId), [exams, classId]);
 
+  const resolveTeacherId = (fallbackId: string | null, subject: string, classIdKey: string | null): string | null => {
+    if (subject && classIdKey) {
+      const k1 = subjectMap[`${classIdKey}::${subject}`];
+      if (k1) return k1;
+    }
+    if (subject) {
+      const k2 = subjectMap[`*::${subject}`];
+      if (k2) return k2;
+    }
+    return fallbackId;
+  };
+
   const teacherList = useMemo(() => {
     const ids = new Set<string>();
-    classSchedules.forEach((s) => s.teacher_id && ids.add(s.teacher_id));
+    classSchedules.forEach((s) => {
+      const id = resolveTeacherId(s.teacher_id, s.subject, s.class_id);
+      if (id) ids.add(id);
+    });
     return Array.from(ids).map((id) => teachers[id]).filter((t): t is TeacherInfo => !!t && !!t.name);
-  }, [classSchedules, teachers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classSchedules, teachers, subjectMap]);
 
-  const teacherLabel = (id: string | null) => {
+  const teacherLabel = (fallbackId: string | null, subject = "", cid: string | null = null) => {
+    const id = resolveTeacherId(fallbackId, subject, cid);
     if (!id) return "Professor não informado";
     const t = teachers[id];
     return t?.name ? `Prof. ${t.name}` : "Professor não informado";
   };
-  const teacherAvatar = (id: string | null) => (id ? teachers[id]?.avatar ?? null : null);
+  const teacherAvatar = (fallbackId: string | null, subject = "", cid: string | null = null) => {
+    const id = resolveTeacherId(fallbackId, subject, cid);
+    return id ? teachers[id]?.avatar ?? null : null;
+  };
 
   if (classes.length === 0) {
     return <div className="glass-panel p-6 text-center text-muted-foreground">Carregando turmas…</div>;
