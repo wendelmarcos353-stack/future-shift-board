@@ -51,6 +51,7 @@ export default function ClassTabs() {
         supabase.from("announcements").select("*").eq("active", true),
         supabase.from("exams").select("*").eq("active", true).gte("exam_date", today).order("exam_date"),
         supabase.from("teacher_directory").select("*"),
+        supabase.from("teacher_subjects").select("class_id,subject,teacher_id"),
       ]);
       if (c.data) setClasses(c.data as any);
       if (s.data) setSchedules(s.data as any);
