@@ -11,6 +11,7 @@ import {
   Users,
   BookOpen,
   GraduationCap,
+  UserCog,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
