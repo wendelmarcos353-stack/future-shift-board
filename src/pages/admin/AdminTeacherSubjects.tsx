@@ -77,7 +77,7 @@ export default function AdminTeacherSubjects() {
     const res = editing.id
       ? await supabase.from("teacher_subjects").update(payload).eq("id", editing.id)
       : await supabase.from("teacher_subjects").insert(payload);
-    if (res.error) return toastSupaError(res.error, { table: "teacher_subjects", op: editing.id ? "update" : "insert" });
+    if (res.error) return toastSupaError(res.error, { table: "teacher_subjects", op: editing.id ? "UPDATE" : "INSERT" });
     toast.success("Vínculo salvo");
     setOpen(false);
     setEditing(null);
@@ -87,7 +87,7 @@ export default function AdminTeacherSubjects() {
   const remove = async (row: Row) => {
     if (!confirm(`Remover vínculo de ${row.subject}?`)) return;
     const { error } = await supabase.from("teacher_subjects").delete().eq("id", row.id);
-    if (error) return toastSupaError(error, { table: "teacher_subjects", op: "delete" });
+    if (error) return toastSupaError(error, { table: "teacher_subjects", op: "DELETE" });
     toast.success("Removido");
     load();
   };
