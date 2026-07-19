@@ -248,7 +248,11 @@ export default function TVMode() {
                   <div className="grid gap-3 overflow-y-auto">
                     {classSchedules.map((s) => {
                       const active = isCurrentClass(s);
-                      const t = s.teacher_id ? teachers[s.teacher_id] : null;
+                      const resolvedId =
+                        subjectMap[`${s.class_id}::${s.subject}`] ||
+                        subjectMap[`*::${s.subject}`] ||
+                        s.teacher_id;
+                      const t = resolvedId ? teachers[resolvedId] : null;
                       const teacherName = t?.name ? `Prof. ${t.name}` : "Professor não informado";
                       return (
                         <div
