@@ -195,7 +195,7 @@ export default function ClassTabs() {
                     ) : (
                       <div className="grid gap-2">
                         {todaySchedules.map((s) => {
-                          const avatar = teacherAvatar(s.teacher_id);
+                          const avatar = teacherAvatar(s.teacher_id, s.subject, s.class_id);
                           return (
                           <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                             <div className="font-mono text-sm font-bold neon-text-cyan w-28">
@@ -209,7 +209,7 @@ export default function ClassTabs() {
                             <div className="flex-1 min-w-0">
                               <p className="font-display text-base">{s.subject}</p>
                               <p className="text-xs text-muted-foreground">
-                                {teacherLabel(s.teacher_id)}
+                                {teacherLabel(s.teacher_id, s.subject, s.class_id)}
                                 {s.room ? ` · Sala ${s.room}` : ""}
                               </p>
                             </div>
@@ -262,7 +262,7 @@ export default function ClassTabs() {
                       return (
                         <div className="grid gap-2 animate-float-up">
                           {daySchedules.map((s) => {
-                            const avatar = teacherAvatar(s.teacher_id);
+                            const avatar = teacherAvatar(s.teacher_id, s.subject, s.class_id);
                             return (
                             <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                               <div className="font-mono text-sm font-bold neon-text-cyan w-28">
@@ -276,7 +276,7 @@ export default function ClassTabs() {
                               <div className="flex-1 min-w-0">
                                 <p className="font-display text-base">{s.subject}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {teacherLabel(s.teacher_id)}
+                                  {teacherLabel(s.teacher_id, s.subject, s.class_id)}
                                   {s.room ? ` · Sala ${s.room}` : ""}
                                 </p>
                               </div>
@@ -305,7 +305,7 @@ export default function ClassTabs() {
                               <p className="font-display text-sm">{l.subject}</p>
                               <p className="text-xs text-muted-foreground">
                                 {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
-                                {l.teacher_id ? ` · ${teacherLabel(l.teacher_id)}` : ""}
+                                {(() => { const lbl = teacherLabel(l.teacher_id, l.subject, l.class_id); return lbl !== 'Professor não informado' ? ` · ${lbl}` : ''; })()}
                                 {l.room ? ` · Sala ${l.room}` : ""}
                               </p>
                             </div>
@@ -364,7 +364,7 @@ export default function ClassTabs() {
                               <p className="text-xs text-muted-foreground">
                                 {e.start_time ? `${e.start_time.slice(0, 5)}${e.end_time ? `–${e.end_time.slice(0, 5)}` : ""}` : ""}
                                 {e.room ? ` · Sala ${e.room}` : ""}
-                                {e.teacher_id ? ` · ${teacherLabel(e.teacher_id)}` : ""}
+                                {(() => { const lbl = teacherLabel(e.teacher_id, e.subject, e.class_id); return lbl !== 'Professor não informado' ? ` · ${lbl}` : ''; })()}
                               </p>
                             </div>
                           </div>
