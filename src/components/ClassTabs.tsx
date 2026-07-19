@@ -34,6 +34,7 @@ export default function ClassTabs() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
   const [teachers, setTeachers] = useState<Record<string, TeacherInfo>>({});
+  const [subjectMap, setSubjectMap] = useState<Record<string, string>>({});
   const [grade, setGrade] = useState<string>("1");
   const [classId, setClassId] = useState<string>("");
   const todayIdx = new Date().getDay();
@@ -43,13 +44,14 @@ export default function ClassTabs() {
   useEffect(() => {
     const load = async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const [c, s, l, a, e, t] = await Promise.all([
+      const [c, s, l, a, e, t, ts] = await Promise.all([
         supabase.from("classes").select("*").eq("active", true).order("order_position"),
         supabase.from("schedules").select("*"),
         supabase.from("lessons").select("*").gte("lesson_date", today),
         supabase.from("announcements").select("*").eq("active", true),
         supabase.from("exams").select("*").eq("active", true).gte("exam_date", today).order("exam_date"),
         supabase.from("teacher_directory").select("*"),
+        supabase.from("teacher_subjects").select("class_id,subject,teacher_id"),
       ]);
       if (c.data) setClasses(c.data as any);
       if (s.data) setSchedules(s.data as any);
@@ -61,6 +63,14 @@ export default function ClassTabs() {
         (t.data as Teacher[]).forEach((x) => { m[x.id] = { name: x.display_name || "", avatar: x.avatar_url }; });
         setTeachers(m);
       }
+      if (ts.data) {
+        const m: Record<string, string> = {};
+        (ts.data as { class_id: string | null; subject: string; teacher_id: string }[]).forEach((r) => {
+          if (r.class_id) m[`${r.class_id}::${r.subject}`] = r.teacher_id;
+          m[`*::${r.subject}`] = m[`*::${r.subject}`] || r.teacher_id;
+        });
+        setSubjectMap(m);
+      }
     };
     load();
     const ch = supabase
@@ -70,6 +80,7 @@ export default function ClassTabs() {
       .on("postgres_changes", { event: "*", schema: "public", table: "lessons" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "exams" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "teacher_subjects" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -111,18 +122,38 @@ export default function ClassTabs() {
   );
   const classExams = useMemo(() => exams.filter((e) => e.class_id === classId), [exams, classId]);
 
+  const resolveTeacherId = (fallbackId: string | null, subject: string, classIdKey: string | null): string | null => {
+    if (subject && classIdKey) {
+      const k1 = subjectMap[`${classIdKey}::${subject}`];
+      if (k1) return k1;
+    }
+    if (subject) {
+      const k2 = subjectMap[`*::${subject}`];
+      if (k2) return k2;
+    }
+    return fallbackId;
+  };
+
   const teacherList = useMemo(() => {
     const ids = new Set<string>();
-    classSchedules.forEach((s) => s.teacher_id && ids.add(s.teacher_id));
+    classSchedules.forEach((s) => {
+      const id = resolveTeacherId(s.teacher_id, s.subject, s.class_id);
+      if (id) ids.add(id);
+    });
     return Array.from(ids).map((id) => teachers[id]).filter((t): t is TeacherInfo => !!t && !!t.name);
-  }, [classSchedules, teachers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classSchedules, teachers, subjectMap]);
 
-  const teacherLabel = (id: string | null) => {
+  const teacherLabel = (fallbackId: string | null, subject = "", cid: string | null = null) => {
+    const id = resolveTeacherId(fallbackId, subject, cid);
     if (!id) return "Professor não informado";
     const t = teachers[id];
     return t?.name ? `Prof. ${t.name}` : "Professor não informado";
   };
-  const teacherAvatar = (id: string | null) => (id ? teachers[id]?.avatar ?? null : null);
+  const teacherAvatar = (fallbackId: string | null, subject = "", cid: string | null = null) => {
+    const id = resolveTeacherId(fallbackId, subject, cid);
+    return id ? teachers[id]?.avatar ?? null : null;
+  };
 
   if (classes.length === 0) {
     return <div className="glass-panel p-6 text-center text-muted-foreground">Carregando turmas…</div>;
@@ -164,7 +195,7 @@ export default function ClassTabs() {
                     ) : (
                       <div className="grid gap-2">
                         {todaySchedules.map((s) => {
-                          const avatar = teacherAvatar(s.teacher_id);
+                          const avatar = teacherAvatar(s.teacher_id, s.subject, s.class_id);
                           return (
                           <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                             <div className="font-mono text-sm font-bold neon-text-cyan w-28">
@@ -178,7 +209,7 @@ export default function ClassTabs() {
                             <div className="flex-1 min-w-0">
                               <p className="font-display text-base">{s.subject}</p>
                               <p className="text-xs text-muted-foreground">
-                                {teacherLabel(s.teacher_id)}
+                                {teacherLabel(s.teacher_id, s.subject, s.class_id)}
                                 {s.room ? ` · Sala ${s.room}` : ""}
                               </p>
                             </div>
@@ -231,7 +262,7 @@ export default function ClassTabs() {
                       return (
                         <div className="grid gap-2 animate-float-up">
                           {daySchedules.map((s) => {
-                            const avatar = teacherAvatar(s.teacher_id);
+                            const avatar = teacherAvatar(s.teacher_id, s.subject, s.class_id);
                             return (
                             <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-card/30">
                               <div className="font-mono text-sm font-bold neon-text-cyan w-28">
@@ -245,7 +276,7 @@ export default function ClassTabs() {
                               <div className="flex-1 min-w-0">
                                 <p className="font-display text-base">{s.subject}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {teacherLabel(s.teacher_id)}
+                                  {teacherLabel(s.teacher_id, s.subject, s.class_id)}
                                   {s.room ? ` · Sala ${s.room}` : ""}
                                 </p>
                               </div>
@@ -274,7 +305,7 @@ export default function ClassTabs() {
                               <p className="font-display text-sm">{l.subject}</p>
                               <p className="text-xs text-muted-foreground">
                                 {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
-                                {l.teacher_id ? ` · ${teacherLabel(l.teacher_id)}` : ""}
+                                {(() => { const lbl = teacherLabel(l.teacher_id, l.subject, l.class_id); return lbl !== 'Professor não informado' ? ` · ${lbl}` : ''; })()}
                                 {l.room ? ` · Sala ${l.room}` : ""}
                               </p>
                             </div>
@@ -333,7 +364,7 @@ export default function ClassTabs() {
                               <p className="text-xs text-muted-foreground">
                                 {e.start_time ? `${e.start_time.slice(0, 5)}${e.end_time ? `–${e.end_time.slice(0, 5)}` : ""}` : ""}
                                 {e.room ? ` · Sala ${e.room}` : ""}
-                                {e.teacher_id ? ` · ${teacherLabel(e.teacher_id)}` : ""}
+                                {(() => { const lbl = teacherLabel(e.teacher_id, e.subject, e.class_id); return lbl !== 'Professor não informado' ? ` · ${lbl}` : ''; })()}
                               </p>
                             </div>
                           </div>

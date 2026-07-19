@@ -626,6 +626,41 @@ export type Database = {
           },
         ]
       }
+      teacher_subjects: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          subject: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          subject: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          subject?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_subjects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           created_at: string

@@ -26,6 +26,7 @@ import AdminTvSettings from "./pages/admin/AdminTvSettings";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminLessons from "./pages/admin/AdminLessons";
 import AdminExams from "./pages/admin/AdminExams";
+import AdminTeacherSubjects from "./pages/admin/AdminTeacherSubjects";
 import Exams from "./pages/Exams";
 import Profile from "./pages/Profile";
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="media" element={<AdminMedia />} />
               <Route path="tv" element={<AdminTvSettings />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="teacher-subjects" element={<AdminTeacherSubjects />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
