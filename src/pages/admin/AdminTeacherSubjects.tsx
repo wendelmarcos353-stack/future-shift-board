@@ -69,27 +69,60 @@ export default function AdminTeacherSubjects() {
       toast.error("Preencha disciplina e professor");
       return;
     }
-    const payload = {
-      class_id: editing.class_id,
-      subject: editing.subject.trim(),
-      teacher_id: editing.teacher_id,
-    };
-    const res = editing.id
-      ? await supabase.from("teacher_subjects").update(payload).eq("id", editing.id)
-      : await supabase.from("teacher_subjects").insert(payload);
-    if (res.error) return toastSupaError(res.error, { table: "teacher_subjects", op: editing.id ? "UPDATE" : "INSERT" });
-    toast.success("Vínculo salvo");
-    setOpen(false);
-    setEditing(null);
-    load();
+    try {
+      const { data: { session }, error: sessErr } = await supabase.auth.getSession();
+      if (sessErr) throw sessErr;
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const payload = {
+        class_id: editing.class_id,
+        subject: editing.subject.trim(),
+        teacher_id: editing.teacher_id,
+      };
+      console.log("[teacher_subjects] user:", session.user.id, "payload:", payload, "editing.id:", editing.id);
+      const res = editing.id
+        ? await supabase.from("teacher_subjects").update(payload).eq("id", editing.id).select()
+        : await supabase.from("teacher_subjects").insert(payload).select();
+      if (res.error) {
+        console.error("[teacher_subjects] supabase error:", res.error);
+        return toastSupaError(res.error, { table: "teacher_subjects", op: editing.id ? "UPDATE" : "INSERT" });
+      }
+      toast.success("Vínculo salvo");
+      setOpen(false);
+      setEditing(null);
+      load();
+    } catch (e: any) {
+      console.error("[teacher_subjects] exception:", e);
+      const msg = e?.message || String(e);
+      if (/failed to fetch/i.test(msg)) {
+        toast.error("Falha de conexão com o servidor. Verifique sua internet e tente novamente.");
+      } else {
+        toast.error(`Erro ao salvar: ${msg}`);
+      }
+    }
   };
 
   const remove = async (row: Row) => {
     if (!confirm(`Remover vínculo de ${row.subject}?`)) return;
-    const { error } = await supabase.from("teacher_subjects").delete().eq("id", row.id);
-    if (error) return toastSupaError(error, { table: "teacher_subjects", op: "DELETE" });
-    toast.success("Removido");
-    load();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const { error } = await supabase.from("teacher_subjects").delete().eq("id", row.id);
+      if (error) {
+        console.error("[teacher_subjects] delete error:", error);
+        return toastSupaError(error, { table: "teacher_subjects", op: "DELETE" });
+      }
+      toast.success("Removido");
+      load();
+    } catch (e: any) {
+      console.error("[teacher_subjects] delete exception:", e);
+      toast.error(`Erro ao remover: ${e?.message || String(e)}`);
+    }
   };
 
   return (
