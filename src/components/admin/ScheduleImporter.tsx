@@ -27,7 +27,7 @@ type ExtractedRow = {
   room: string;
 };
 
-const ACCEPT = ".pdf,.png,.jpg,.jpeg,.txt,application/pdf,image/png,image/jpeg,text/plain";
+const ACCEPT = ".png,.jpg,.jpeg,.txt,image/png,image/jpeg,text/plain";
 const MAX_MB = 15;
 
 function normalizeDay(input: any): number {
