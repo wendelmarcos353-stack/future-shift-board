@@ -103,7 +103,26 @@ export default function ScheduleImporter() {
       setProgress(45);
 
       const { data, error } = await supabase.functions.invoke("parse-schedule", { body: payload });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // FunctionsHttpError esconde o body real em error.context. Extrair a mensagem verdadeira da função.
+        let realMsg = error.message;
+        try {
+          const resp = (error as any)?.context;
+          if (resp && typeof resp.json === "function") {
+            const j = await resp.json();
+            if (j?.error) realMsg = j.error;
+            else if (j?.detail) realMsg = j.detail;
+            console.error("[parse-schedule] erro completo:", j);
+          } else if (resp && typeof resp.text === "function") {
+            const t = await resp.text();
+            if (t) realMsg = t;
+            console.error("[parse-schedule] erro (text):", t);
+          }
+        } catch (extractErr) {
+          console.error("[parse-schedule] falha ao extrair erro:", extractErr);
+        }
+        throw new Error(realMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       setStatus("Montando tabela de revisão...");
