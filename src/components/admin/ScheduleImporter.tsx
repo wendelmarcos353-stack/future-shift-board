@@ -112,7 +112,7 @@ export default function ScheduleImporter() {
       setStatus("Montando tabela de revisão...");
       setProgress(80);
 
-      const parsed: ExtractedRow[] = (data?.rows ?? []).map((r: any) => ({
+      const parsed: ExtractedRow[] = (aiRows ?? []).map((r: any) => ({
         day_of_week: normalizeDay(r.day_of_week),
         start_time: normalizeTime(r.start_time),
         end_time: normalizeTime(r.end_time),
