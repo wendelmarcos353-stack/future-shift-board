@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileText, Trash2, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { toastSupaError } from "@/lib/supaError";
+import { extrairHorarios, type ScheduleAIInput } from "@/lib/scheduleAI";
 import { useAuth } from "@/hooks/useAuth";
+
 
 const DAY_MAP: Record<string, number> = {
   "domingo": 0, "segunda": 1, "segunda-feira": 1, "terca": 2, "terça": 2, "terca-feira": 2, "terça-feira": 2,
@@ -89,41 +91,23 @@ export default function ScheduleImporter() {
       setProgress(15);
       await loadClasses();
 
-      let payload: any;
+      let input: ScheduleAIInput;
       if (file.type === "text/plain" || /\.txt$/i.test(file.name)) {
-        const txt = await file.text();
-        payload = { textContent: txt, fileName: file.name };
+        input = { textContent: await file.text() };
       } else {
         const b64 = await fileToBase64(file);
-        const mime = file.type || (file.name.endsWith(".pdf") ? "application/pdf" : "image/png");
-        payload = { fileBase64: b64, mimeType: mime, fileName: file.name };
+        const mime = file.type || "image/png";
+        if (!mime.startsWith("image/")) {
+          throw new Error("Tipo não suportado. Envie uma imagem (PNG/JPG) ou um arquivo TXT.");
+        }
+        input = { fileBase64: b64, mimeType: mime };
       }
 
       setStatus("Analisando grade com Inteligência Artificial...");
       setProgress(45);
 
-      const { data, error } = await supabase.functions.invoke("parse-schedule", { body: payload });
-      if (error) {
-        // FunctionsHttpError esconde o body real em error.context. Extrair a mensagem verdadeira da função.
-        let realMsg = error.message;
-        try {
-          const resp = (error as any)?.context;
-          if (resp && typeof resp.json === "function") {
-            const j = await resp.json();
-            if (j?.error) realMsg = j.error;
-            else if (j?.detail) realMsg = j.detail;
-            console.error("[parse-schedule] erro completo:", j);
-          } else if (resp && typeof resp.text === "function") {
-            const t = await resp.text();
-            if (t) realMsg = t;
-            console.error("[parse-schedule] erro (text):", t);
-          }
-        } catch (extractErr) {
-          console.error("[parse-schedule] falha ao extrair erro:", extractErr);
-        }
-        throw new Error(realMsg);
-      }
-      if (data?.error) throw new Error(data.error);
+      const aiRows = await extrairHorarios(input);
+
 
       setStatus("Montando tabela de revisão...");
       setProgress(80);
